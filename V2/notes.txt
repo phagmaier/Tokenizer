@@ -1,0 +1,2 @@
+So the node class should now keep track of the 
+letft and right subtrings
