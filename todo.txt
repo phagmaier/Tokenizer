@@ -1,0 +1,28 @@
+**************************************************
+                      FINISHED
+                      -------- 
+1. String class and can read the file pretty accuratley 
+2. Splits on things you're supposed to split on and includes them 
+**************************************************
+
+**************************************************
+                        TODO 
+                      -------- 
+1. Now instead of words you split into tokens  
+2. Start with each pair of bytes (chars)
+3. Need a custom hashmap
+  - hashmap will include tokens (either string or int)
+  - will include a count 
+  - will have a sorted list of counts 
+  - each token will also have a list of pairs(indexes to where they can be found)
+
+ACTUALLY YOU MAY WANT A HASHMAP WHERE EACH ELEMENT ALSO CONTAINS A POINTER TO 
+IT'S LEFT AND RIGHT TOKEN TO MAKE IT EASIER TO RECOMPUTE COUNTS LATER 
+
+JUST KEEP A SORTED LIST AND KEEP TRACK OF IT'S SIZE AS YOU MERGE AND COMPRESS 
+CAN USE BINARY SEARCH TO FIND THE COUNT YOU'RE LOOKING FOR TO REMOVE THEN 
+'SHRINK THE SIZE' DON'T ACTUALLY NEED TO SHRINK but just dec the count
+  
+**************************************************
+
+
