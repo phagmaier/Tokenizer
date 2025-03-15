@@ -1,7 +1,7 @@
 #pragma once
 #include "Token.h"
-// #define DEFAULT_MAP_SIZE 100000
-#define DEFAULT_MAP_SIZE 100
+#define DEFAULT_MAP_SIZE 100000
+// #define DEFAULT_MAP_SIZE 100
 
 typedef struct Node {
   Token *token;

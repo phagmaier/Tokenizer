@@ -1,11 +1,5 @@
-//  BY THE WAY NEED A START AND END OF file or like stream thing if only so it
-//  knows where to begin and where to end i think
-
 #include "Map_token.h"
-#include "String.h"
-#include "Token.h"
 
-#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -70,7 +64,6 @@ bool make_map(Map_token *dic, const char *fileName) {
   total = map_count(dic);
   printf("TOTAL COUNT FROM DIC: %zu\n", total);
 
-  size_t num_entries = 0;
   return false;
 }
 
@@ -83,6 +76,6 @@ int main() {
     return 1;
   }
   printf("MAP SIZE: %zu\n", dic.size);
-  // map_free_data(dic.data, dic.cap);
+  map_free_data(dic.data, dic.cap);
   return 0;
 }

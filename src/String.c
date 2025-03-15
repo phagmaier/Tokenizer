@@ -53,5 +53,4 @@ void string_free_string(String *string) {
   if (string) {
     free(string->chars);
   }
-  free(string);
 }
