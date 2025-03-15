@@ -21,6 +21,7 @@ size_t map_hash_token(Token *token, size_t cap) {
   while (*str) {
     hash ^= (unsigned char)(*str);
     hash *= prime;
+    ++str; // Increment the pointer!
   }
   return hash % cap;
 }
@@ -94,6 +95,7 @@ size_t helper_resize(LL **new_data, LL *ll, size_t cap) {
 }
 
 void map_resize(Map_token *map) {
+  printf("RESIZING\n");
   size_t new_size = 0;
   size_t new_cap = map->cap * 2;
   LL **old_data = map->data;
@@ -104,6 +106,7 @@ void map_resize(Map_token *map) {
     }
   }
   map_free_after_resize(old_data);
+  printf("FREED\n");
   map->data = data;
   map->size = new_size;
   map->cap = new_cap;
