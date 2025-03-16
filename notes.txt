@@ -1,0 +1,29 @@
+**************************************************
+                      FINISHED
+                      -------- 
+1. Have a dictionary with counts and pointers to 
+it's left and right tokens 
+
+2. RB TREE to have SORTED COUNTS
+
+**************************************************
+
+**************************************************
+                   IMPORTANT
+                   ---------
+CURRENTLY I CLEAN UP ALL MEMORY
+-I delete token on insertion if duplicate
+- THIS IS INNEFICIENT AND COULD LEAD TO MEM LEAK
+**************************************************
+
+**************************************************
+                        TODO 
+                      -------- 
+1. Actually Add the left and right tokens not just NULL 
+2. Add <Start> & <End> tokens + ascii characters 
+  individually for unrecognizable token
+3. Write algo to merge and then delete old tokens/make new ones
+4. MEM POOL
+**************************************************
+
+

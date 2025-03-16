@@ -23,12 +23,8 @@ endif()
 # Optimization settings
 if (CMAKE_BUILD_TYPE STREQUAL "Debug")
     message(STATUS "Debug mode: Disabling optimizations")
-    set(CMAKE_C_FLAGS_DEBUG "-O0 -g")  # No optimizations, include debug symbols
+    target_compile_options(runme PRIVATE -O0 -g)  # No optimizations, include debug symbols
 else()
     message(STATUS "Release/Other mode: Enabling max optimizations")
-    set(CMAKE_C_FLAGS_RELEASE "-O3 -march=native -flto") # Max optimizations
+    target_compile_options(runme PRIVATE -O3 -march=native -flto) # Max optimizations
 endif()
-
-# Apply optimizations
-target_compile_options(runme PRIVATE "$<$<CONFIG:Release>:${CMAKE_C_FLAGS_RELEASE}>")
-target_compile_options(runme PRIVATE "$<$<CONFIG:Debug>:${CMAKE_C_FLAGS_DEBUG}>")

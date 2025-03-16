@@ -1,16 +1,18 @@
 #pragma once
-#include "String.h"
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
 
 typedef struct Token {
-  bool is_token;
-  String string;
-  unsigned int token;
+  char *string;
+  unsigned int val;
+  unsigned int size;
 } Token;
 
-Token *token_init_from_chars(const char *pair);
-void token_copy_token(const Token *src, Token *dest);
-bool token_is_equal(const Token *one, const Token *two);
+Token *token_from_bytes(const char one, const char two);
+
+void token_free_token(Token *token);
 Token *token_merge_tokens(const Token *left, const Token *right,
                           unsigned int val);
-void token_free_token(Token *token);
+
+bool token_is_equal(const Token *one, const Token *two);

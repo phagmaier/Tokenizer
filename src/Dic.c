@@ -8,17 +8,19 @@ Node *node_make_node(Token *token, const size_t count) {
     perror("FAILED TO ALLOCATE NODE IN CONSTRUCTOR\n");
   }
   node->pairs = (Pair *)malloc(sizeof(Pair) * DEFAULT_PAIR_SIZE);
-  if (node->pairs) {
-    perror("FAILED PAIRS FOR NODE IN CONSTRUCTOR\n");
+  if (!node->pairs) {
+    perror("FAILED TO MAKE PAIRS FOR NODE IN CONSTRUCTOR\n");
     return NULL;
   }
   node->token = token;
   node->count = count;
   node->next = NULL;
+  node->p_cap = DEFAULT_PAIR_SIZE;
+  node->p_size = 0;
   return node;
 }
 
-void node_append_pair(Node *node, const Token *left, const Token *right) {
+void node_append_pair(Node *node, Token *left, Token *right) {
   if (node->p_cap == node->p_size) {
     node->p_cap *= 2;
     node->pairs = (Pair *)realloc(node->pairs, sizeof(Pair) * node->p_cap);
@@ -37,10 +39,8 @@ void node_free_node(Node *node) {
     return;
   }
   token_free_token(node->token);
-  node->token = NULL;
   free(node->pairs);
-  node->pairs = NULL;
-  node = NULL;
+  free(node);
 }
 
 void dic_init_dic(Dic *dic) {
@@ -119,6 +119,7 @@ void dic_insert(Dic *dic, Token *token, Token *left, Token *right) {
     if (token_is_equal(node->token, token)) {
       ++(node->count);
       node_append_pair(node, left, right);
+      token_free_token(token);
     } else {
       Node *tmp = node_make_node(token, 1);
       node_append_pair(tmp, left, right);
@@ -132,7 +133,14 @@ void dic_insert(Dic *dic, Token *token, Token *left, Token *right) {
   }
 }
 
-void free_dic(Dic *dic) {
+void dic_free_dic(Dic *dic) {
   for (size_t i = 0; i < dic->cap; ++i) {
+    Node *current = dic->data[i];
+    while (current) {
+      Node *next = current->next;
+      node_free_node(current);
+      current = next;
+    }
   }
+  free(dic->data);
 }

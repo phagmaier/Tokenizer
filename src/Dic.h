@@ -1,6 +1,7 @@
 #pragma once
 #include "Token.h"
-#define DEFAULT_DIC_SIZE 100000
+// #define DEFAULT_DIC_SIZE 100000
+#define DEFAULT_DIC_SIZE 100
 #define DEFAULT_PAIR_SIZE 5
 
 typedef struct Pair {
@@ -24,11 +25,11 @@ typedef struct Dic {
 } Dic;
 
 Node *node_make_node(Token *token, const size_t count);
-void node_append_pair(Node *node, const Token *left, const Token *right);
+void node_append_pair(Node *node, Token *left, Token *right);
 void node_free_node(Node *node);
 void dic_init_dic(Dic *dic);
 size_t dic_hash(const char *str, const size_t cap);
 size_t ll_resize(Node *node, Node **data, const size_t new_size);
 void dic_resize(Dic *dic);
 void dic_insert(Dic *dic, Token *token, Token *left, Token *right);
-void free_dic(Dic *dic);
+void dic_free_dic(Dic *dic);
