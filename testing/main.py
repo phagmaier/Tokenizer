@@ -1,64 +1,60 @@
-TOKENS = 1000
+from collections import Counter
 
-class Token:
-    def __init__(self, l,r):
-        self.l =l
-        self.r = r
-    def get_str(self):
-        return self.l + self.r
-    def __eq__(self, other):
-        if isinstance(other, Token):
-            return self.l == other.l and self.r == other.r
-        return False
+def file_to_text():
+    with open("../data/infiniteJest.txt", 'r', encoding="utf-8") as file:
+        return file.read()
 
-    def __hash__(self):
-        return hash(self.l + self.r)
-    def __repr__(self):
-        return f"PAIR CLASS: ({self.l}, {self.r})"
 
-def file_to_string():
-    string = ""
-    with open("../data/infiniteJest.txt",'r') as file:
-        while True:
-            char = file.read(1)
-            if not char:
-                return string
-            string += char
-    return string
+def get_max_token(text):
+    dic = Counter()
+    for i in range(len(text) - 1):  
+        pair = text[i] + text[i + 1]
+        dic[pair] += 1
 
-def clean_string(string, tokens):
-    first = string[1]
-    for i in range(1, len(string)):
-        pair = Pair(first,string[i])
-        if pair in tokens:
+    if not dic:
+        print("ERROR")
+        return None
 
-        
+    token, max_count = max(dic.items(), key=lambda x: x[1])
+    return token, max_count
 
 
 
-def add_word(string):
-    dic = {}
-    first =string[0]
-    for i in range(1,len(string)):
-        pair = Pair(first,string[i])
-        if pair in dic:
-            dic[pair]+=1
+def get_new_text(text, token):
+    new_text = []
+    i = 0
+
+    while i < len(text) - 1:
+        pair = text[i] + text[i + 1]
+        if pair == token:
+            new_text.append(token)  # Merge token
+            i += 2  # Skip the next character (since we merged)
         else:
-            dic[pair] = 1
-        #pairs.append((first,i))
-        first = string[i]
-    max = 0
-    token = None
-    for i,x in dic.items():
-        if x > max:
-            token = i
-            max = x
-    return token
+            new_text.append(text[i])
+            i += 1
+
+    if i < len(text):  # Append the last character if not merged
+        new_text.append(text[i])
+
+    return new_text
 
 def main():
-    string = file_to_string()
-    add_word(string)
+    vocab = []
+    counts = []
+    text = file_to_text()
+    total = 0
+    for _ in range(100):
+        token,count = get_max_token(text)
+        vocab.append(token)
+        counts.append(count)
+        text = get_new_text(text,token)
+        total +=1 
+    with open("results.txt",'w') as file:
+        for word,count in zip(vocab,counts):
+            file.write(f"{word}: {count}\n")
 
+
+    
 if __name__ == '__main__':
     main()
 
