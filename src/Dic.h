@@ -1,8 +1,21 @@
 #pragma once
 #include "Token.h"
+#include "VocabArr.h"
 // #define DEFAULT_DIC_SIZE 100000
-#define DEFAULT_DIC_SIZE 100
+#define DEFAULT_DIC_SIZE 10000
+#define DEFAULT_TDIC_SIZE 100
 #define DEFAULT_PAIR_SIZE 5
+
+typedef struct T_node {
+  Token *token;
+  struct T_node *next;
+} T_node;
+
+typedef struct TokenDic {
+  T_node **tokens;
+  unsigned int size;
+  unsigned int cap;
+} TokenDic;
 
 typedef struct Pair {
   Token *left;
@@ -33,3 +46,6 @@ size_t ll_resize(Node *node, Node **data, const size_t new_size);
 void dic_resize(Dic *dic);
 void dic_insert(Dic *dic, Token *token, Token *left, Token *right);
 void dic_free_dic(Dic *dic);
+Node *dic_get_node(Dic *dic, Token *token);
+
+// void merge_max_token(Dic *dic, RB *tree, VocabArr *vocab);

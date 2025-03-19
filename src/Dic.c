@@ -1,6 +1,4 @@
 #include "Dic.h"
-#include "Token.h"
-#include <stdio.h>
 
 Node *node_make_node(Token *token, const size_t count) {
   Node *node = (Node *)malloc(sizeof(Node));
@@ -143,4 +141,146 @@ void dic_free_dic(Dic *dic) {
     }
   }
   free(dic->data);
+}
+
+Node *dic_get_node(Dic *dic, Token *token) {
+  size_t index = dic_hash(token->string, dic->cap);
+  Node *node = dic->data[index];
+  while (node && node->token != token) {
+    node = node->next;
+  }
+  return node;
+}
+
+T_node *tnode_make_tnode(Token *token) {
+  T_node *node = (T_node *)malloc(sizeof(T_node));
+  node->next = NULL;
+  return node;
+}
+
+TokenDic *Tdic_make() {
+  TokenDic *dic = (TokenDic *)malloc(sizeof(TokenDic));
+  dic->tokens = (T_node **)calloc(DEFAULT_TDIC_SIZE, sizeof(T_node *));
+  dic->size = 0;
+  dic->cap = DEFAULT_TDIC_SIZE;
+  return dic;
+}
+
+void tnode_free_tnode(T_node *node) {
+  T_node *tmp;
+  while (node) {
+    tmp = node->next;
+    free(node);
+    node = tmp;
+  }
+}
+
+void tdic_free_tdic(TokenDic *dic) {
+  for (unsigned int i = 0; i < dic->cap; ++i) {
+    if (dic->tokens[i]) {
+      tnode_free_tnode(dic->tokens[i]);
+    }
+  }
+  free(dic->tokens);
+  free(dic);
+}
+
+void tdic_insert_helper(T_node *newNode, T_node **data,
+                        const unsigned int index) {
+  T_node *node = data[index];
+  if (!node) {
+    data[index] = newNode;
+    return;
+  }
+  T_node *parent;
+  while (node) {
+    parent = node;
+    node = node->next;
+  }
+  parent->next = newNode;
+}
+
+void tdic_resize_helper(T_node *node, const unsigned int cap, T_node **data) {
+  T_node *tmp;
+  while (node) {
+    tmp = node->next;
+    node->next = NULL;
+    size_t index = dic_hash(node->token->string, cap);
+    tdic_insert_helper(node, data, cap);
+  }
+}
+
+void tdic_resize(TokenDic *dic) {
+  const unsigned int old_cap = dic->cap;
+  unsigned int new_cap = dic->cap * 2;
+  dic->cap = new_cap;
+  dic->size = 0;
+  T_node **new_data = (T_node **)calloc(new_cap, sizeof(T_node *));
+  for (unsigned int i = 0; i < old_cap; ++i) {
+    if (dic->tokens[i]) {
+      tdic_resize_helper(dic->tokens[i], new_cap, new_data);
+    }
+  }
+  dic->tokens = new_data;
+}
+
+// I never increment the size
+void tdic_insert(TokenDic *dic, Token *token) {
+  if (dic->size * 2 >= dic->cap) {
+    tdic_resize(dic);
+  }
+  // T_node *node = tnode_make_tnode(token);
+  size_t index = dic_hash(token->string, dic->cap);
+  T_node *node = dic->tokens[index];
+  T_node *parent = NULL;
+  if (!node) {
+    (dic->size)++;
+    dic->tokens[index] = tnode_make_tnode(token);
+    return;
+  }
+  while (node) {
+    if (!strcmp(node->token->string, token->string)) {
+      return;
+    }
+    parent = node;
+    node = node->next;
+  }
+  parent->next = tnode_make_tnode(token);
+}
+
+T_node *tdic_search(TokenDic *dic, Token *token) {
+  size_t index = dic_hash(token->string, dic->cap);
+  T_node *node = dic->tokens[index];
+  T_node *parent = NULL;
+  while (node) {
+    if (node->token == token) {
+      return node;
+    }
+    parent = node;
+    node = node->next;
+  }
+  printf("NO TOKEN FOUND\n");
+  return node;
+}
+
+void tdic_delete(TokenDic *dic, Token *token) {
+  size_t index = dic_hash(token->string, dic->cap);
+  T_node *node = dic->tokens[index];
+  T_node *parent = NULL;
+  if (node->token == token) {
+    parent = node->next;
+    node->next = NULL;
+    free(node);
+    dic->tokens[index] = parent;
+    return;
+  }
+  while (node) {
+    if (node->token == token) {
+      parent->next = node->next;
+      free(node);
+    }
+    parent = node;
+    node = node->next;
+  }
+  printf("NO TOKEN FOUND\n");
 }

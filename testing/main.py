@@ -1,99 +1,72 @@
 from collections import Counter
-#token, max_count = max(dic.items(), key=lambda x: x[1])
-
-class Token:
-    def __init__(self,l,r):
-        self.l = l
-        self.r = r
-        self.string = l +r
-    def __hash__(self):
-        return hash((self.string))
-
-    def __eq__(self, other):
-        if isinstance(other, Token):
-            return other.string == self.string
-        if isinstance(other, str):
-            return other == self.string
-        return False
-    def __repr__(self):
-        return f"TOKEN: L: {self.l} R: {self.r}"
-
-class T_Node:
-    def __init__(self, token, count):
-        self.token = token
-        self.count = count
-        self.right = None
-        self.left = None
-    def __lt__(self, other):
-        return self.count < other.count
-    def __gt__(self, other):
-        return self.count > other.count
-    def __eq__(self, other):
-        return self.count == other.count and self.token == other.token
-        return False
-    def __repr__(self):
-        return f"NODE: token: {self.token} COUNT: {self.count}"
-
-
-class BST:
-    def __init__(self):
-        self.root = None
-    
-    def __insert__(self, item):
-        if not self.root:
-            self.root = item
-            return
-        parent = self.root
-        curr = self.root
-        dir = None
-        while(curr):
-            if curr == item:
-                return
-            if item > curr:
-                parent = curr 
-                curr = curr.right
-                dir = 'right'
-            else:
-                parent = curr
-                curr = curr.left
-                dir = 'left'
-        if not dir:
-            print("ERROR  IN INSERT")
-            return
-        if dir=='left':
-            parent.left = item
-        else:
-            parent.right = item
-
-        def delete(self, item):
-            if not self.root:
-                print("BST EMPTY")
-                return
-            if self.root == item:
-                pass
-            curr = self.root 
-            parent = self.root
-            while(curr):
-                if curr == item:
-
-
-
-
 
 def file_to_text():
     with open("../data/infiniteJest.txt", 'r', encoding="utf-8") as file:
         return file.read()
 
-def text_to_tokens(text):
-    dic = Counter()
-    for i in range(len(text)-1):
-        dic[Token(text[i],text[i+1])] +=1
 
+def get_max_token(text):
+    dic = Counter()
+    for i in range(len(text) - 1):  
+        pair = text[i] + text[i + 1]
+        dic[pair] += 1
+
+    if not dic:
+        print("ERROR")
+        return dic
+
+    #token, max_count = max(dic.items(), key=lambda x: x[1])
+    token = ""
+    max_count = 0
+    average = 0
+    total = 0
+    for string,count in dic.items():
+        if count > max_count:
+            max_count = count 
+            token =string
+        average += count
+        total +=1
+    print(f"Average token size was: {average/total}")
+    return token, max_count
+
+
+
+def get_new_text(text, token):
+    new_text = []
+    i = 0
+
+    while i < len(text) - 1:
+        pair = text[i] + text[i + 1]
+        if pair == token:
+            new_text.append(token)  # Merge token
+            i += 2  # Skip the next character (since we merged)
+        else:
+            new_text.append(text[i])
+            i += 1
+
+    if i < len(text):  # Append the last character if not merged
+        new_text.append(text[i])
+
+    return new_text
 
 def main():
+    vocab = []
+    counts = []
     text = file_to_text()
-   
+    total = 0
+    for _ in range(100):
+        token,count = get_max_token(text)
+        vocab.append(token)
+        counts.append(count)
+        text = get_new_text(text,token)
+        total +=1 
+    with open("results.txt",'w') as file:
+        for word,count in zip(vocab,counts):
+            file.write(f"{word}: {count}\n")
+
+
     
 if __name__ == '__main__':
     main()
+
 

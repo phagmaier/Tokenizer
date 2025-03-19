@@ -5,7 +5,7 @@ typedef enum Color { RED, BLACK } Color;
 typedef enum Dir { LEFT, RIGHT } Dir;
 
 typedef struct Value {
-  size_t count;
+  size_t count; // this should probably be changed to unsigned int
   Token *token;
   Color color;
   struct Value *parent;
