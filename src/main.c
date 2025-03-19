@@ -1,100 +1,41 @@
-// #include "Map_token.h"
 #include "Dic.h"
-#include "RedBlack.h"
-#include "Token.h"
+#include "Heap.h"
+#include "StringArr.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+// #include <time.h>
 
-size_t count_ll(Node *node) {
-  size_t count = 0;
-  while (node) {
-    count += node->count;
-    node = node->next;
-  }
-  return count;
-}
+typedef struct MemPool_char {
+  size_t free_count;
+  size_t in_use_count;
+  struct MemPool_char *next;
+} MemPool_char;
+
+typedef struct Max_and_tokens {
+  char *max_token;
+  StrArr *arr;
+} Max_and_tokens;
+
 size_t dic_count(Dic *dic) {
   size_t count = 0;
   for (size_t i = 0; i < dic->cap; ++i) {
-    if (dic->data[i]) {
-      count += count_ll(dic->data[i]);
+    if (dic->nodes[i].string) {
+      count += dic->nodes[i].count;
     }
   }
   return count;
 }
 
-size_t insert_ll(Node *node, RB *tree) {
-  size_t max = 0;
-  while (node) {
-    if (node->count > max) {
-      max = node->count;
-    }
-    rb_insert_token(tree, node->token, node->count);
-    node = node->next;
-  }
-  return max;
-}
-
-void print_node(Value *node) {
-  if (node) {
-    printf("%s\n", node->token->string);
-    print_node(node->left);
-    print_node(node->right);
-  }
-}
-
-void print_tree(Value *node) {
-  while (node) {
-    print_node(node->left);
-    print_node(node->right);
-  }
-}
-
-void make_rb(Dic *dic) {
-  size_t max = 0;
-  RB rb;
-  RB *rb_ptr = &rb;
-  rb_init(rb_ptr);
-  for (size_t i = 0; i < dic->cap; ++i) {
-    if (dic->data[i]) {
-      size_t tmp = insert_ll(dic->data[i], rb_ptr);
-      if (tmp > max) {
-        max = tmp;
-      }
-    }
-  }
-  printf("THE HIGHEST COUNT IS: %zu\n", max);
-  Value *val = rb_find_max(rb_ptr);
-  printf("THE MOST FREQUENTLY OCCURING TOKEN WAS: %s\n", val->token->string);
-  size_t rb_max = val->count;
-  if (rb_max == max) {
-    printf("YAY RB TREE GAVE THE MAX\n");
-  } else {
-    printf("BOO THE RB TREE GAVE THE WRONG NUMBER\n");
-  }
-  // print_tree(rb.root);
-  rb_free_tree(rb_ptr);
-}
-
-// #define DELIMITERS " \t\n\r.,;:!?\"'()[]{}<>|\\/+=-_*&^%$#@`~"
-
 int is_printable_ascii(char c) { return c >= 32 && c <= 126; }
 
-////////////////////////////////////////////////////
-bool make_map(const char *fileName) {
-  Dic dic;
-  dic_init_dic(&dic);
-  Dic *dic_ptr = &dic;
-  Token *prev = NULL;
-  Token *curr = NULL;
-  Token *next = NULL;
-
+StrArr read_text(const char *fileName) {
+  StrArr arr = strArr_make();
   FILE *file = fopen(fileName, "rb");
   if (!file) {
     perror("Error opening file");
-    return true;
+    return arr;
   }
 
   // Get file size
@@ -107,89 +48,62 @@ bool make_map(const char *fileName) {
   if (!buffer) {
     perror("Memory allocation failed");
     fclose(file);
-    return true;
+    return arr;
   }
   fread(buffer, 1, file_size, file);
   fclose(file);
-
-  // Process character pairs
-  size_t total = 0;
-  char pair[2] = {buffer[0], 0}; // Initialize first char
-  for (size_t i = 1; i < file_size; i++) {
-    if (is_printable_ascii(buffer[i])) {
-      pair[1] = buffer[i];
-      curr = token_from_bytes(pair[0], pair[1]);
-      dic_insert(dic_ptr, curr, prev, next);
-      pair[0] = pair[1]; // Shift to the next pair
-      total++;
-    }
+  for (size_t i = 0; i < file_size; ++i) {
+    strArr_append(&arr, string_make_char(buffer[i]));
   }
-
-  printf("TOTAL NUMBER OF BYTE/CHAR PAIRS IS: %zu\n", total);
-  size_t count = dic_count(dic_ptr);
-  if (count == total) {
-    printf("YAY THE COUNTS WERE EQUAL\n");
-  } else {
-    printf("COUNTS NOT EQUAL\n");
-  }
-  printf("TOTAL COUNT DIC: %zu\n", count);
-
   free(buffer);
-  make_rb(dic_ptr);
-  dic_free_dic(dic_ptr);
-  return false;
+  return arr;
 }
-///////////////////////////////////////////////////
 
-// int is_delimiter(char c) { return strchr(DELIMITERS, c) != NULL; }
-
-// in real version just pass path of the data folder then glob all the .txt
-// files
-// FOR TESTING NOW ALL THE ADJACENT TOKEN POINTERS ARE NULL
-/*
-bool make_map(const char *fileName) {
-  Dic dic;
-  dic_init_dic(&dic);
-  Dic *dic_ptr = &dic;
-  size_t total = 0;
-  Token *prev = NULL;
-  Token *curr = NULL;
-  Token *next = NULL;
-  FILE *file = fopen(fileName, "rb");
-  if (!file) {
-    perror("Error opening file");
-    return true;
-  }
-  char c;
-  char pair[2];
-  pair[0] = fgetc(file);
-  while ((c = fgetc(file)) != EOF) {
-    if (is_printable_ascii(c)) {
-      ++total;
-      pair[1] = c;
-      // pair[0] = pair[1];
-      curr = token_from_bytes(pair[0], pair[1]);
-      dic_insert(dic_ptr, curr, prev, next);
-      pair[0] = pair[1];
+char *get_max_token(Dic *dic, Heap *heap) {
+  for (size_t i = 0; i < dic->cap; ++i) {
+    if (dic->nodes[i].string) {
+      heap_insert(heap, dic->nodes[i].string, dic->nodes[i].count);
     }
   }
-  printf("TOTAL NUMBER OF BYTE/CHAR PAIRS IS:%zu\n", total);
-  size_t count = dic_count(dic_ptr);
-  if (count == total) {
-    printf("YAY THE COUNTS WERE EQUAL\n");
-  } else {
-    printf("COUNTS NOT EQUAL\n");
-  }
-  printf("TOTAL COUNT DIC: %zu\n", count);
-  fclose(file);
-  make_rb(dic_ptr);
-  dic_free_dic(dic_ptr);
-  return false;
+  char *max_token = heap_pop(heap).string;
+  dic_reset(dic);
+  return max_token;
 }
-*/
+
+char *first_tokenize(StrArr *text, Dic *dic, Heap *heap) {
+  StrArr tokens = strArr_make();
+  for (size_t i = 0; i < text->size - 1; ++i) {
+    char *string = string_append_strings(text->arr[i], text->arr[i + 1]);
+    strArr_append(&tokens, string);
+    dic_insert_dic(dic, string);
+  }
+  return get_max_token(dic, heap);
+}
+
+char *tokenize(StrArr *text, Dic *dic, Heap *heap, char *max_token) {
+  StrArr tokens = strArr_make();
+  for (size_t i = 0; i < text->size - 1; ++i) {
+    char *string = string_append_strings(text->arr[i], text->arr[i + 1]);
+    strArr_append(&tokens, string);
+    dic_insert_dic(dic, string);
+  }
+  return get_max_token(dic, heap);
+}
+
+void print_tokens(char **tokens, size_t size) {
+  for (size_t i = 0; i < size; ++i) {
+    printf("%s", tokens[i]);
+  }
+}
 
 int main() {
   const char *fileName = "../data/infiniteJest.txt";
-  make_map(fileName);
+  StrArr text = read_text(fileName);
+  char *max_token = NULL;
+  Dic dic;
+  dic_make_dic(&dic);
+  Heap heap = heap_make_heap(text.size);
+  max_token = first_tokenize(&text, &dic, &heap);
+  printf("MAX TOKEN: %s\n", max_token);
   return 0;
 }
