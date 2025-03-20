@@ -8,10 +8,17 @@ typedef struct Node {
   size_t count;
 } Node;
 
+// before you reset and delete all strings in whatever file
+// you need to make sure you allocate enough space for max_token
+// either that or just use a huge array of chars to make sure that the
+// token will always fit and just copy it in
+// but you should do that later after returning the max
 typedef struct Dic {
   Node *nodes;
   size_t size;
   size_t cap;
+  char *max_token;
+  size_t max_count;
 } Dic;
 
 void node_init_node(Node *node, char *string);

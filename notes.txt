@@ -1,29 +1,16 @@
-**************************************************
-                      FINISHED
-                      -------- 
-1. Have a dictionary with counts and pointers to 
-it's left and right tokens 
-
-2. RB TREE to have SORTED COUNTS
 
 **************************************************
+                    IMPROVEMENTS
+                    -------------
+1. Need a mempool for pointers to chars (string) **char
+2. Need a mempool for characters char* for strings
+3. Need a easy and efficient way to free them 
+  So for the most active array of text you do not free it 
+  but after tokenezation you free the old version
+  
+  -This means you have to get the max element out of the dic 
+  -Free the dic. Free all characters in the old array 
+  -When i say free what this really means is just moving the active 
+  mempool to the free section
 
 **************************************************
-                   IMPORTANT
-                   ---------
-CURRENTLY I CLEAN UP ALL MEMORY
--I delete token on insertion if duplicate
-- THIS IS INNEFICIENT AND COULD LEAD TO MEM LEAK
-**************************************************
-
-**************************************************
-                        TODO 
-                      -------- 
-1. Actually Add the left and right tokens not just NULL 
-2. Add <Start> & <End> tokens + ascii characters 
-  individually for unrecognizable token
-3. Write algo to merge and then delete old tokens/make new ones
-4. MEM POOL
-**************************************************
-
-

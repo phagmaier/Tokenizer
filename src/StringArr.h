@@ -10,9 +10,14 @@ typedef struct StrArr {
 } StrArr;
 
 StrArr strArr_make();
+StrArr strArr_make_size(size_t size);
 
 void strArr_append(StrArr *arr, char *str);
 
 char *string_append_strings(char *left, char *right);
 
 char *string_make_char(char c);
+
+char *sr_make_str(char *src);
+
+char *str_make_str_from_strings(const char *src1, const char *src2);

@@ -1,5 +1,4 @@
 #include "Dic.h"
-#include "Heap.h"
 #include "StringArr.h"
 #include <stdbool.h>
 #include <stdio.h>
@@ -59,35 +58,67 @@ StrArr read_text(const char *fileName) {
   return arr;
 }
 
-char *get_max_token(Dic *dic, Heap *heap) {
-  for (size_t i = 0; i < dic->cap; ++i) {
-    if (dic->nodes[i].string) {
-      heap_insert(heap, dic->nodes[i].string, dic->nodes[i].count);
+// have this just because you know the token will be null
+// so no need for pointless check
+char *first_tokenize(StrArr *text, Dic *dic) {
+  StrArr tokens = strArr_make();
+  for (size_t i = 0; i < text->size - 1; ++i) {
+    char *string = string_append_strings(text->arr[i], text->arr[i + 1]);
+    strArr_append(&tokens, string);
+    dic_insert_dic(dic, string);
+  }
+  char *string = dic->max_token;
+  dic_reset(dic);
+  return string;
+}
+
+// all of these strings need to be owned or part of a mempool
+char *tokenize(StrArr *text, Dic *dic, char *max_token) {
+  StrArr new_text = strArr_make();
+  char **tokens = text->arr;
+  char *pl = tokens[0];
+  char *pr = tokens[1];
+  char *curr;
+  char *tmp = str_make_str_from_strings(pl, pr);
+  unsigned int x = 2;
+  // NEED TO HAVE L & R AND THEY CAN'T BE THE TOKEN
+  if (!strcmp(tmp, max_token)) {
+    pl = max_token;
+    pr = tokens[2];
+    x = 3;
+  }
+  for (size_t i = x; i < text->size - 1; ++i) {
+    curr = tokens[i];
+    tmp = str_make_str_from_strings(pr, curr);
+    if (!strcmp(tmp, max_token)) {
+      pr = max_token;
+    } else {
+      strArr_append(&new_text, pl);
+      tmp = str_make_str_from_strings(pl, pr);
+      dic_insert_dic(dic, tmp);
+      pl = pr;
+      pr = curr;
     }
   }
-  char *max_token = heap_pop(heap).string;
+  strArr_append(&new_text, pl);
+  curr = tokens[text->size - 1];
+  tmp = str_make_str_from_strings(pr, curr);
+  if (!strcmp(tmp, max_token)) {
+    tmp = str_make_str_from_strings(pl, max_token);
+    dic_insert_dic(dic, tmp);
+    strArr_append(&new_text, tmp);
+  } else {
+    tmp = str_make_str_from_strings(pl, max_token);
+    dic_insert_dic(dic, tmp);
+    tmp = str_make_str_from_strings(pr, curr);
+    dic_insert_dic(dic, tmp);
+    strArr_append(&new_text, pr);
+    strArr_append(&new_text, curr);
+  }
+
+  char *string = dic->max_token;
   dic_reset(dic);
-  return max_token;
-}
-
-char *first_tokenize(StrArr *text, Dic *dic, Heap *heap) {
-  StrArr tokens = strArr_make();
-  for (size_t i = 0; i < text->size - 1; ++i) {
-    char *string = string_append_strings(text->arr[i], text->arr[i + 1]);
-    strArr_append(&tokens, string);
-    dic_insert_dic(dic, string);
-  }
-  return get_max_token(dic, heap);
-}
-
-char *tokenize(StrArr *text, Dic *dic, Heap *heap, char *max_token) {
-  StrArr tokens = strArr_make();
-  for (size_t i = 0; i < text->size - 1; ++i) {
-    char *string = string_append_strings(text->arr[i], text->arr[i + 1]);
-    strArr_append(&tokens, string);
-    dic_insert_dic(dic, string);
-  }
-  return get_max_token(dic, heap);
+  return string;
 }
 
 void print_tokens(char **tokens, size_t size) {
@@ -102,8 +133,7 @@ int main() {
   char *max_token = NULL;
   Dic dic;
   dic_make_dic(&dic);
-  Heap heap = heap_make_heap(text.size);
-  max_token = first_tokenize(&text, &dic, &heap);
+  max_token = first_tokenize(&text, &dic);
   printf("MAX TOKEN: %s\n", max_token);
   return 0;
 }
