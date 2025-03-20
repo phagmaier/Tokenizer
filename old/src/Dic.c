@@ -6,7 +6,7 @@ void node_init_node(Node *node, char *string) {
   node->count = 1;
 }
 
-void dic_init_dic(Dic *dic) {
+void dic_make_dic(Dic *dic) {
   dic->nodes = (Node *)calloc(DEFAULT_DIC_SIZE, sizeof(Node));
   dic->size = 0;
   dic->cap = DEFAULT_DIC_SIZE;
@@ -14,24 +14,11 @@ void dic_init_dic(Dic *dic) {
   dic->max_count = 0;
 }
 
-Dic dic_make_dic_default() {
-  Dic dic;
-  dic.nodes = (Node *)calloc(DEFAULT_DIC_SIZE, sizeof(Node));
-  dic.size = 0;
-  dic.cap = DEFAULT_DIC_SIZE;
-  dic.max_token = NULL;
-  dic.max_count = 0;
-  return dic;
-}
-
-Dic dic_make_dic(size_t size) {
-  Dic dic;
-  dic.nodes = (Node *)calloc(size, sizeof(Node));
-  dic.size = 0;
-  dic.cap = size;
-  dic.max_token = NULL;
-  dic.max_count = 0;
-  return dic;
+void dic_reset(Dic *dic) {
+  memset(dic->nodes, 0, sizeof(Node) * dic->cap);
+  dic->size = 0;
+  dic->max_count = 0;
+  dic->max_token = NULL;
 }
 
 size_t dic_hash(const char *s, const size_t cap) {
@@ -75,7 +62,7 @@ void dic_insert_dic(Dic *dic, char *string) {
   size_t index = dic_hash(string, dic->cap);
   if (!dic->nodes[index].string) {
     node_init_node(&dic->nodes[index], string);
-    if (!dic->max_count) {
+    if (dic->nodes[index].count > dic->max_count) {
       dic->max_count = dic->nodes[index].count;
       dic->max_token = dic->nodes[index].string;
     }
@@ -99,18 +86,4 @@ void dic_insert_dic(Dic *dic, char *string) {
   }
 }
 
-char *dic_reset(Dic *dic) {
-  char *token = dic->max_token;
-  memset(dic->nodes, 0, sizeof(Node) * dic->cap);
-  dic->size = 0;
-  dic->max_count = 0;
-  dic->max_token = NULL;
-  return token;
-}
-
-void dic_free(Dic *dic) {
-  free(dic->nodes);
-  dic->size = 0;
-  dic->max_count = 0;
-  dic->max_token = NULL;
-}
+void dic_clear(Dic *dic) { memset(dic->nodes, 0, sizeof(Node) * dic->cap); }

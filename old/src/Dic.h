@@ -22,11 +22,15 @@ typedef struct Dic {
 } Dic;
 
 void node_init_node(Node *node, char *string);
-void dic_init_dic(Dic *dic);
-Dic dic_make_dic_default();
-Dic dic_make_dic(size_t size);
+
+void dic_make_dic(Dic *dic);
+
+void dic_reset(Dic *dic);
+
 size_t dic_hash(const char *s, const size_t cap);
+
 void dic_resize(Dic *dic);
+
 void dic_insert_dic(Dic *dic, char *string);
-char *dic_reset(Dic *dic);
-void dic_free(Dic *dic);
+
+void dic_clear(Dic *dic);

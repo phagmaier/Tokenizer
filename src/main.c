@@ -1,40 +1,13 @@
 #include "Dic.h"
-#include "StringArr.h"
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-// #include <time.h>
+#include "StrArr.h"
+#define DEFAULT_VOCAB_SIZE 1000
 
-typedef struct MemPool_char {
-  size_t free_count;
-  size_t in_use_count;
-  struct MemPool_char *next;
-} MemPool_char;
-
-typedef struct Max_and_tokens {
-  char *max_token;
-  StrArr *arr;
-} Max_and_tokens;
-
-size_t dic_count(Dic *dic) {
-  size_t count = 0;
-  for (size_t i = 0; i < dic->cap; ++i) {
-    if (dic->nodes[i].string) {
-      count += dic->nodes[i].count;
-    }
-  }
-  return count;
-}
-
-int is_printable_ascii(char c) { return c >= 32 && c <= 126; }
-
-StrArr read_text(const char *fileName) {
-  StrArr arr = strArr_make();
+StrArr read_text(const char *fileName, CPool *cpool) {
+  // StrArr arr = strArr_make(DEFAULT_NUM_STRS);
   FILE *file = fopen(fileName, "rb");
   if (!file) {
     perror("Error opening file");
-    return arr;
+    exit(1);
   }
 
   // Get file size
@@ -47,93 +20,86 @@ StrArr read_text(const char *fileName) {
   if (!buffer) {
     perror("Memory allocation failed");
     fclose(file);
-    return arr;
+    exit(1);
   }
   fread(buffer, 1, file_size, file);
   fclose(file);
+  StrArr arr = strArr_make(file_size + 1);
   for (size_t i = 0; i < file_size; ++i) {
-    strArr_append(&arr, string_make_char(buffer[i]));
+    strArr_append_char(&arr, cpool, buffer[i]);
   }
   free(buffer);
   return arr;
 }
 
-// have this just because you know the token will be null
-// so no need for pointless check
-char *first_tokenize(StrArr *text, Dic *dic) {
-  StrArr tokens = strArr_make();
-  for (size_t i = 0; i < text->size - 1; ++i) {
-    char *string = string_append_strings(text->arr[i], text->arr[i + 1]);
-    strArr_append(&tokens, string);
-    dic_insert_dic(dic, string);
-  }
-  char *string = dic->max_token;
-  dic_reset(dic);
-  return string;
-}
+char *first_get_max_tokens(StrArr *text, Dic *dic, CPool *cpool) {
 
-// all of these strings need to be owned or part of a mempool
-char *tokenize(StrArr *text, Dic *dic, char *max_token) {
-  StrArr new_text = strArr_make();
-  char **tokens = text->arr;
-  char *pl = tokens[0];
-  char *pr = tokens[1];
-  char *curr;
-  char *tmp = str_make_str_from_strings(pl, pr);
-  unsigned int x = 2;
-  // NEED TO HAVE L & R AND THEY CAN'T BE THE TOKEN
-  if (!strcmp(tmp, max_token)) {
-    pl = max_token;
-    pr = tokens[2];
-    x = 3;
-  }
-  for (size_t i = x; i < text->size - 1; ++i) {
-    curr = tokens[i];
-    tmp = str_make_str_from_strings(pr, curr);
-    if (!strcmp(tmp, max_token)) {
-      pr = max_token;
-    } else {
-      strArr_append(&new_text, pl);
-      tmp = str_make_str_from_strings(pl, pr);
-      dic_insert_dic(dic, tmp);
-      pl = pr;
-      pr = curr;
-    }
-  }
-  strArr_append(&new_text, pl);
-  curr = tokens[text->size - 1];
-  tmp = str_make_str_from_strings(pr, curr);
-  if (!strcmp(tmp, max_token)) {
-    tmp = str_make_str_from_strings(pl, max_token);
-    dic_insert_dic(dic, tmp);
-    strArr_append(&new_text, tmp);
-  } else {
-    tmp = str_make_str_from_strings(pl, max_token);
-    dic_insert_dic(dic, tmp);
-    tmp = str_make_str_from_strings(pr, curr);
-    dic_insert_dic(dic, tmp);
-    strArr_append(&new_text, pr);
-    strArr_append(&new_text, curr);
-  }
+  // might be -2? but i don't think so we don't want the last element
+  const size_t size = text->size - 1;
+  const String *arr = text->strings;
 
-  char *string = dic->max_token;
-  dic_reset(dic);
-  return string;
-}
-
-void print_tokens(char **tokens, size_t size) {
   for (size_t i = 0; i < size; ++i) {
-    printf("%s", tokens[i]);
+    String pair = str_merge(arr[i], arr[i + 1], cpool);
+    dic_insert_dic(dic, pair.str);
+    // strArr_insert(new_text, pair);
   }
+  char *token = dic_reset(dic);
+  return token;
+}
+
+// do it this way to ensure that the string survives and we make a deep copy
+void append_vocab(char **vocab, char *token, CPool *cpool, size_t index) {
+  unsigned int s_size = strlen(token) + 1;
+  char *new_token = cPool_get(cpool, strlen(token));
+  memcpy(new_token, token, s_size);
+  vocab[index++] = new_token;
 }
 
 int main() {
-  const char *fileName = "../data/infiniteJest.txt";
-  StrArr text = read_text(fileName);
-  char *max_token = NULL;
-  Dic dic;
-  dic_make_dic(&dic);
-  max_token = first_tokenize(&text, &dic);
-  printf("MAX TOKEN: %s\n", max_token);
+  // assuming vocab size the size of tokens
+  CPool cpool_tokens = cPool_make(DEFAULT_VOCAB_SIZE * 5);
+  CPool *cpool_tokens_ptr = &cpool_tokens;
+  char *vocab[DEFAULT_VOCAB_SIZE];
+  char *fileName = "../data/infiniteJest.txt";
+  CPool cpool1 = cPool_make_default();
+  CPool *pool_ptr1 = &cpool1;
+  CPool cpool2 = cPool_make_default();
+  CPool *pool_ptr2 = &cpool2;
+
+  StrArr text = read_text(fileName, pool_ptr1);
+  StrArr *text_ptr = &text;
+  StrArr new_text = strArr_make(text.size + 1);
+  StrArr *new_text_ptr = &new_text;
+  Dic dic = dic_make_dic(text.size * 2);
+  Dic *dic_ptr = &dic;
+
+  // start of the actual logic
+  char *new_vocab;
+
+  // passing poolptr2 because must reset 1 when done
+  // this is to ensure survival of strings and so we don't have a billion
+  // strings on the heap
+  new_vocab = first_get_max_tokens(text_ptr, dic_ptr, pool_ptr2);
+  append_vocab(vocab, new_vocab, cpool_tokens_ptr, 0);
+  for (size_t i = 1; i < DEFAULT_VOCAB_SIZE; ++i) {
+    break;
+
+    // will have to swap the pointers of text and new text
+    // always send one and then just clear the other
+    // so new_text just completley replaces text
+    // you then clear text and go again and text becomes new_text
+    // so just constantly swap
+    // remeber to also swap their pool pointers then as well
+    // new_vocab = get_max_tokens(text_ptr, new_text_ptr, dic_ptr, pool_ptr2);
+    append_vocab(vocab, new_vocab, cpool_tokens_ptr, i);
+  }
+
+  // cleanup
+  StrArr_free(text_ptr);
+  StrArr_free(new_text_ptr);
+  cPool_free(cpool_tokens_ptr);
+  cPool_free(pool_ptr1);
+  cPool_free(pool_ptr2);
+  dic_free(dic_ptr);
   return 0;
 }

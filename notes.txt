@@ -1,16 +1,10 @@
 
 **************************************************
-                    IMPROVEMENTS
+                         TODO 
                     -------------
-1. Need a mempool for pointers to chars (string) **char
-2. Need a mempool for characters char* for strings
-3. Need a easy and efficient way to free them 
-  So for the most active array of text you do not free it 
-  but after tokenezation you free the old version
-  
-  -This means you have to get the max element out of the dic 
-  -Free the dic. Free all characters in the old array 
-  -When i say free what this really means is just moving the active 
-  mempool to the free section
-
+1. Implement the python algo in C with the mempool
+2. Look for potential speedups
+3. Make sure no memory leaks
+4. Then you need to convert all those scripts you downloaded into txt files
+5. Use it on that and basically see what's like the largest chunk you can load in at once
 **************************************************
