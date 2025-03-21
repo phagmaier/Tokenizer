@@ -22,7 +22,7 @@ from scratch in C
 | [StrArr.c](src/StrArr.c) | header file for strings stringarr and mempool |
 
 
-## TODO
+## TO-DO
 1. Use threads 
 2. Add support so it can load multiple txt files at a time to tokenize on larger data
 3. Dynamic arrays don't need to be that dynamic. So don't need checks. The largest number of strings possible is the first pass
@@ -32,10 +32,10 @@ from scratch in C
 
 
 
-## LONG TERM TODO
+## LONG TERM TO-DO
 1. Rewrite my autograd class in C++
 2. Write a performant NN/Transformer to train tokenizer 
-3. Eventually expand this out to build my own little CHATGPT
+3. Eventually expand this out to build my own little LLM
 
 
 
