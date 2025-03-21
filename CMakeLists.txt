@@ -28,3 +28,5 @@ else()
     message(STATUS "Release/Other mode: Enabling max optimizations")
     target_compile_options(runme PRIVATE -O3 -march=native -flto) # Max optimizations
 endif()
+
+

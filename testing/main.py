@@ -1,72 +1,80 @@
+import time
 from collections import Counter
 
 def file_to_text():
-    with open("../data/infiniteJest.txt", 'r', encoding="utf-8") as file:
-        return file.read()
+    """Reads file and converts text into a list of characters."""
+    #should use below version but want to match C code and assuming UTF8 
+    #because downloading all my data from pdfs converting to utf8
+    #with open("../data/infiniteJest.txt", 'r', encoding="utf-8") as file:
+    with open("../data/infiniteJest.txt", 'r') as file:
+        return list(file.read())
 
-
-def get_max_token(text):
-    dic = Counter()
-    for i in range(len(text) - 1):  
-        pair = text[i] + text[i + 1]
-        dic[pair] += 1
-
+def get_max(dic):
+    """Find the most frequent token pair."""
     if not dic:
         print("ERROR")
-        return dic
+        return None
+    return max(dic.items(), key=lambda x: x[1])[0]
 
-    #token, max_count = max(dic.items(), key=lambda x: x[1])
-    token = ""
-    max_count = 0
-    average = 0
-    total = 0
-    for string,count in dic.items():
-        if count > max_count:
-            max_count = count 
-            token =string
-        average += count
-        total +=1
-    print(f"Average token size was: {average/total}")
-    return token, max_count
-
-
-
-def get_new_text(text, token):
+def tokenize(text, token):
+    """Performs one step of BPE, replacing the most frequent token pair."""
+    dic = Counter()
     new_text = []
-    i = 0
-
-    while i < len(text) - 1:
-        pair = text[i] + text[i + 1]
-        if pair == token:
-            new_text.append(token)  # Merge token
-            i += 2  # Skip the next character (since we merged)
+    pl = text[0] 
+    pr = text[1]
+    curr = None
+    tmp = pl+pr
+    x = 2
+    if tmp == token:
+        pl = token
+        pr = text[2]
+        x=3
+    for i in range(x,len(text)-1):
+        curr = text[i]
+        tmp = pr + curr
+        if tmp == token:
+            pr = token
         else:
-            new_text.append(text[i])
-            i += 1
+            new_text.append(pl)
+            dic[pl+pr]+=1
+            pl = pr
+            pr = curr
+    new_text.append(pl)
+    curr = text[-1]
+    tmp = pr + curr
+    if tmp == token:
+        dic[pl+token] +=1
+        new_text.append(token)
+    else:
+        dic[pl+pr]+=1
+        dic[pr+curr] +=1
+        new_text.append(pr)
+        new_text.append(curr)
 
-    if i < len(text):  # Append the last character if not merged
-        new_text.append(text[i])
-
-    return new_text
+    return get_max(dic),new_text
 
 def main():
+    start_time = time.time()
     vocab = []
-    counts = []
     text = file_to_text()
-    total = 0
-    for _ in range(100):
-        token,count = get_max_token(text)
-        vocab.append(token)
-        counts.append(count)
-        text = get_new_text(text,token)
-        total +=1 
-    with open("results.txt",'w') as file:
-        for word,count in zip(vocab,counts):
-            file.write(f"{word}: {count}\n")
+    #text = list("llhello worlllldll")
+    max_token = None
+    for i in range(1000):  
+        max_token, text = tokenize(text, max_token)
+        if max_token is None:
+            print("ERROR TEXT NOT BIG ENOUGH")
+            break  
+        vocab.append(max_token)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
 
+    minutes = int(elapsed_time // 60)  
+    seconds = elapsed_time % 60  
+    with open("../python_version.txt",'w') as file:
+        file.write(f"Elapsed time: {minutes}.{int(seconds):02d} minutes\n")
+        for i,x in enumerate(vocab):
+            file.write(f"{i}: {x}\n")
 
-    
 if __name__ == '__main__':
     main()
-
 
