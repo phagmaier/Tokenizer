@@ -2,7 +2,7 @@
 #include "StrArr.h"
 #include <stdio.h>
 #include <time.h>
-#define DEFAULT_VOCAB_SIZE 1000
+#define DEFAULT_VOCAB_SIZE 5000
 
 StrArr read_text(const char *fileName, CPool *cpool) {
   // StrArr arr = strArr_make(DEFAULT_NUM_STRS);
@@ -108,9 +108,9 @@ char *get_max_token(const StrArr *arr, StrArr *new_text, CPool *cpool_new_text,
 
 char *append_vocab(char **vocab, char *token, CPool *cpool, size_t index) {
   unsigned int s_size = strlen(token) + 1;
-  char *new_token = cPool_get(cpool, strlen(token));
+  char *new_token = cPool_get(cpool, s_size);
   memcpy(new_token, token, s_size);
-  vocab[index++] = new_token;
+  vocab[index] = new_token;
   return new_token;
 }
 
@@ -127,7 +127,7 @@ void swap_text_ptrs(StrArr **one, StrArr **two) {
 }
 
 void write_vocab(char **arr, int minutes, double seconds) {
-  FILE *file = fopen("../C_version.txt", "w");
+  FILE *file = fopen("../C_tokens.txt", "w");
   if (file == NULL) {
     perror("Error: Could not open file.\n");
     exit(1);
@@ -136,7 +136,6 @@ void write_vocab(char **arr, int minutes, double seconds) {
   for (size_t i = 0; i < DEFAULT_VOCAB_SIZE; i++) {
     fprintf(file, "%zu: %s\n", i, arr[i]);
   }
-
   fclose(file);
 }
 
@@ -173,7 +172,7 @@ int main() {
   for (size_t i = 1; i < DEFAULT_VOCAB_SIZE; ++i) {
     new_vocab = get_max_token(text_ptr, new_text_ptr, cpool_new_text_ptr,
                               dic_ptr, new_vocab);
-    new_vocab = append_vocab(vocab, new_vocab, cpool_tokens_ptr, 0);
+    new_vocab = append_vocab(vocab, new_vocab, cpool_tokens_ptr, i);
     // printf("NEW VOCAB WORD ITERATION  %zu: %s\n", i, new_vocab);
     StrArr_reset(text_ptr);
     cPool_reset(cpool_text_ptr);

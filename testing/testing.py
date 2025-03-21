@@ -3,16 +3,15 @@ from collections import Counter
 
 def file_to_text():
     """Reads file and converts text into a list of characters."""
-    with open("../data/infiniteJest.txt", 'r', encoding="utf-8") as file:
+    #with open("../data/infiniteJest.txt", 'r', encoding="utf-8") as file:
+    with open("../data/infiniteJest.txt", 'r') as file:
         return list(file.read())
 
 def get_max(dic):
     """Find the most frequent token pair."""
     if not dic:
+        print("ERROR")
         return None
-    #x = max(dic.items(), key=lambda x: x[1])[0]
-    #print(f"MAX COUNT: {dic[x]}\n")
-    #return x
     return max(dic.items(), key=lambda x: x[1])[0]
 
 #think you have to process three at a time
@@ -64,7 +63,6 @@ def main():
         if max_token is None:
             print("ERROR TEXT NOT BIG ENOUGH")
             break  
-        #print(f"Iteration {i+1}: Merged {max_token}")
         vocab.append(max_token)
     end_time = time.time()
     elapsed_time = end_time - start_time
@@ -72,7 +70,7 @@ def main():
     minutes = int(elapsed_time // 60)  
     seconds = elapsed_time % 60  
     with open("../python_version.txt",'w') as file:
-        file.write(f"Elapsed time: {minutes}.{int(seconds):02d} minutes")
+        file.write(f"Elapsed time: {minutes}.{int(seconds):02d} minutes\n")
         for i,x in enumerate(vocab):
             file.write(f"{i}: {x}\n")
 
