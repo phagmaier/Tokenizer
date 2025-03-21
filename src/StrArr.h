@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define DEFAULT_NUM_CHARS 1000000
-#define DEFAULT_NUM_STRS 100000
+#define DEFAULT_NUM_CHARS 10000000
+#define DEFAULT_NUM_STRS 1000000
 
 // remeber that size of string is the whole size
 typedef struct String {

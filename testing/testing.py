@@ -1,4 +1,4 @@
-
+import time
 from collections import Counter
 
 def file_to_text():
@@ -14,9 +14,6 @@ def get_max(dic):
     #print(f"MAX COUNT: {dic[x]}\n")
     #return x
     return max(dic.items(), key=lambda x: x[1])[0]
-
-def handle_end():
-    pass
 
 #think you have to process three at a time
 def tokenize(text, token):
@@ -57,19 +54,27 @@ def tokenize(text, token):
     return get_max(dic),new_text
 
 def main():
+    start_time = time.time()
     vocab = []
     text = file_to_text()
     #text = list("llhello worlllldll")
     max_token = None
-    for i in range(10000):  
+    for i in range(1000):  
         max_token, text = tokenize(text, max_token)
         if max_token is None:
             print("ERROR TEXT NOT BIG ENOUGH")
             break  
         #print(f"Iteration {i+1}: Merged {max_token}")
         vocab.append(max_token)
-    for i in vocab:
-        print(i)
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+
+    minutes = int(elapsed_time // 60)  
+    seconds = elapsed_time % 60  
+    with open("../python_version.txt",'w') as file:
+        file.write(f"Elapsed time: {minutes}.{int(seconds):02d} minutes")
+        for i,x in enumerate(vocab):
+            file.write(f"{i}: {x}\n")
 
 if __name__ == '__main__':
     main()
