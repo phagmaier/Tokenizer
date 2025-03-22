@@ -1,43 +1,44 @@
 #include "Helper_fucs.h"
+#include "Dic.h"
 #include <string.h>
 
-PairArr pairArr_make(size_t num_threads, size_t file_bytes) {
+ThreadData *threads_data_init(size_t num_threads, size_t file_bytes,
+                              DicSafe *dic, size_t total_tokens) {
+  ThreadData *arr = (ThreadData *)malloc(sizeof(ThreadData) * num_threads);
   size_t even = file_bytes / num_threads;
   size_t leftover = file_bytes % num_threads;
-
-  PairArr arr;
-  arr.arr = (IndexPair *)malloc(sizeof(IndexPair) * num_threads);
-  arr.size = num_threads;
-
+  size_t num_chars = even + leftover + 1;
   size_t prev_end = 0;
+  size_t even_tokens = total_tokens / num_threads;
+  size_t tokens_leftover = total_tokens % num_threads;
   for (size_t i = 0; i < num_threads; ++i) {
-    arr.arr[i].start = prev_end;
-    arr.arr[i].end = prev_end + even + (i < leftover ? 1 : 0);
-    prev_end = arr.arr[i].end;
+    ThreadData tmp;
+    tmp.text = strArr_make(num_chars);
+    tmp.new_text = strArr_make(num_chars);
+    tmp.cpool_text = cPool_make(num_chars * 5);
+    tmp.cpool_new_text = cPool_make(num_chars * 5);
+    tmp.dic = dic_make_dic(num_chars * 2);
+    tmp.global_dic = dic;
+    tmp.index_start = prev_end;
+    tmp.index_end = prev_end + even + (i < leftover ? 1 : 0);
+    tmp.num_tokens = even_tokens + (i < tokens_leftover ? 1 : 0);
+    prev_end = tmp.index_end;
+    arr[i] = tmp;
   }
   return arr;
 }
 
-void init_threads_and_data_arr(ThreadAndData *arr, size_t num_threads,
-                               size_t file_bytes) {
-  size_t even = file_bytes / num_threads;
-  size_t leftover = file_bytes % num_threads;
-
-  size_t prev_end = 0;
+// free eveyth
+void threads_data_free(ThreadData *arr, size_t num_threads) {
   for (size_t i = 0; i < num_threads; ++i) {
-    arr[i].thread arr[i].index_start = prev_end;
-    arr[i].index_end = prev_end + even + (i < leftover ? 1 : 0);
-    prev_end = arr[i].index_end;
+    ThreadData tmp = arr[i];
+    StrArr_free(&tmp.text);
+    StrArr_free(&tmp.new_text);
+    cPool_free(&tmp.cpool_text);
+    cPool_free(&tmp.cpool_new_text);
+    dic_free(&tmp.dic);
+    tmp.global_dic = NULL; // don't free yet
   }
-}
-
-void pairArr_free(PairArr *arr) { free(arr->arr); }
-
-void pairArr_append(PairArr *arr, size_t start, size_t end) {
-  IndexPair pair;
-  pair.start = start;
-  pair.end = end;
-  arr->arr[(arr->size)++] = pair;
 }
 
 size_t get_num_threads() {

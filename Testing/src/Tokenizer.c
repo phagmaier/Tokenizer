@@ -101,3 +101,29 @@ char *get_max_token(const StrArr *arr, StrArr *new_text, CPool *cpool_new_text,
   }
   return dic_reset(dic);
 }
+
+/*
+ ***************************************************
+                    THREADED VERSIONS
+ ***************************************************
+ */
+
+// the file name will always be ../data/data.txt
+void read_file_thread(StrArr *arr, CPool *cpool, size_t start, size_t end) {
+  FILE *file = fopen("../data/data.txt", "rb");
+  if (file == NULL) {
+    perror("Couldn't Open file");
+    exit(1);
+  }
+  size_t total_size = end - start;
+  // Move to a specific position (index) in the file
+  fseek(file, start, SEEK_SET);
+
+  // Read some data at this position
+  char *buffer = (char *)malloc(total_size);
+  size_t bytesRead = fread(buffer, 1, total_size, file);
+  for (size_t i = 0; i < bytesRead; ++i) {
+    strArr_append_char(arr, cpool, buffer[i]);
+  }
+  free(buffer);
+}

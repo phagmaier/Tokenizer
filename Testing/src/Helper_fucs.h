@@ -12,33 +12,21 @@
 #endif
 #endif
 
-typedef struct IndexPair {
-  size_t start;
-  size_t end;
-} IndexPair;
-
-typedef struct PairArr {
-  IndexPair *arr;
-  size_t size;
-} PairArr;
-
 typedef struct ThreadData {
   StrArr text;
   StrArr new_text;
   CPool cpool_text;
   CPool cpool_new_text;
   Dic dic;
+  DicSafe *global_dic;
   size_t index_start;
   size_t index_end;
-  // will also need pointer to safe dic
-} ThreadAndData;
+  size_t num_tokens;
+} ThreadData;
 
-void init_threads_and_data_arr(ThreadAndData *arr, size_t num_threads,
-                               size_t file_bytes);
-
-PairArr pairArr_make(size_t num_threads, size_t file_bytes);
-void pairArr_free(PairArr *arr);
-void pairArr_append(PairArr *arr, size_t start, size_t end);
+ThreadData *threads_data_init(size_t num_threads, size_t file_bytes,
+                              DicSafe *dic, size_t toal_tokens);
+void threads_data_free(ThreadData *arr, size_t num_threads);
 
 size_t get_num_threads();
 

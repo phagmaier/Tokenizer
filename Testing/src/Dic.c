@@ -1,4 +1,6 @@
 #include "Dic.h"
+#include "StrArr.h"
+#include <pthread.h>
 #include <string.h>
 
 void node_init_node(Node *node, char *string) {
@@ -76,7 +78,7 @@ void dic_insert_dic(Dic *dic, char *string) {
   if (!dic->nodes[index].string) {
     node_init_node(&dic->nodes[index], string);
     if (!dic->max_count) {
-      dic->max_count = dic->nodes[index].count;
+      dic->max_count = 1;
       dic->max_token = dic->nodes[index].string;
     }
     return;
@@ -93,8 +95,8 @@ void dic_insert_dic(Dic *dic, char *string) {
     index = (index + 1) % dic->cap;
   }
   node_init_node(&dic->nodes[index], string);
-  if (dic->nodes[index].count > dic->max_count) {
-    dic->max_count = dic->nodes[index].count;
+  if (!dic->max_count) {
+    dic->max_count = 1;
     dic->max_token = dic->nodes[index].string;
   }
 }
@@ -113,4 +115,66 @@ void dic_free(Dic *dic) {
   dic->size = 0;
   dic->max_count = 0;
   dic->max_token = NULL;
+}
+
+/***************************************************
+ *               DIC SAFE STUF
+ ****************************************************/
+void dicSafe_init_dic(DicSafe *dic, size_t size) {
+  pthread_mutex_init(&dic->lock, NULL);
+  dic->cpool = cPool_make(size * 5); // 5 characters per word should be plentty
+  dic->nodes = (char **)calloc(size, sizeof(char *));
+  dic->size = 0;
+  dic->cap = size;
+}
+
+void dicSafe_resize(DicSafe *dic) {
+  size_t old_cap = dic->cap;
+  size_t new_cap = dic->cap * 2;
+  dic->cap = new_cap;
+  char **old_nodes = dic->nodes;
+  char **new_nodes = (char **)calloc(new_cap, sizeof(char *));
+  for (size_t i = 0; i < old_cap; ++i) {
+    if (old_nodes[i]) {
+      size_t index = dic_hash(old_nodes[i], new_cap);
+      while (new_nodes[index]) {
+        index = (index + 1) % new_cap;
+      }
+      new_nodes[index] = old_nodes[i];
+    }
+  }
+  dic->nodes = new_nodes;
+  free(old_nodes);
+}
+
+// tue for new insert false for old
+bool dicSafe_insert(DicSafe *dic, String string) {
+  pthread_mutex_lock(&dic->lock);
+  if (dic->size * 2 >= dic->cap) {
+    dicSafe_resize(dic);
+  }
+  size_t index = dic_hash(string.str, dic->cap);
+  if (!dic->nodes[index]) {
+    // node_init_node(&dic->nodes[index], string);
+    dic->nodes[index] = str_deep_copy(string, &dic->cpool).str;
+    pthread_mutex_unlock(&dic->lock);
+    return true;
+  }
+  while (dic->nodes[index]) {
+    if (!strcmp(string.str, dic->nodes[index])) {
+      pthread_mutex_unlock(&dic->lock);
+      return false;
+    }
+    index = (index + 1) % dic->cap;
+  }
+
+  pthread_mutex_unlock(&dic->lock);
+  dic->nodes[index] = str_deep_copy(string, &dic->cpool).str;
+  return true;
+}
+
+void dicSafe_free(DicSafe *dic) {
+  cPool_free(&dic->cpool);
+  free(dic->nodes);
+  dic->size = 0;
 }
