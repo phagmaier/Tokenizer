@@ -1,4 +1,7 @@
 #include "Tokenizer.h"
+#include "StrArr.h"
+
+/*
 
 StrArr read_text(const char *fileName, CPool *cpool) {
   // StrArr arr = strArr_make(DEFAULT_NUM_STRS);
@@ -30,29 +33,34 @@ StrArr read_text(const char *fileName, CPool *cpool) {
   return arr;
 }
 
-char *first_get_max_tokens(StrArr *text, Dic *dic, CPool *cpoolPairs) {
-  // might be -2? but i don't think so we don't want the last element
+
+char *first_get_max_token(const StrArr *text, Dic *dic, CPool *new_text) {
   const size_t size = text->size - 1;
   const String *arr = text->strings;
-
   for (size_t i = 0; i < size; ++i) {
-    String pair = str_merge(arr[i], arr[i + 1], cpoolPairs);
+    // printf("STARTING %zu", i);
+    // printf("MAKING PAIR\n");
+    String pair = str_merge(arr[i], arr[i + 1], new_text);
+    // printf("PAIR MADE\n");
+    // printf("INSERTING INTO DIC\n");
     dic_insert_dic(dic, pair.str);
+    // printf("INSERTED INTO DIC\n");
   }
-  return dic_reset(dic);
+  printf("DONE JUST RETURN AND RESET DIC\n");
+  // String max_token = str_deep_copy(dic->max_token, new_text);
+  char *max_token = str_deep_copy_cstring(dic->max_token, new_text);
+  dic_reset(dic);
+  return max_token;
 }
 
 // just pass in the pointer to the strings
 char *get_max_token(const StrArr *arr, StrArr *new_text, CPool *cpool_new_text,
-                    Dic *dic, char *max_token) {
+                    Dic *dic, const char *max_token) {
 
   // initilization
+  String string_max = char_deep_copy_cstring(max_token, cpool_new_text);
   const String *old_text = arr->strings;
   const size_t text_size = arr->size - 1;
-  String max_token_str;
-  max_token_str.size = strlen(max_token) + 1;
-  max_token_str.str = max_token;
-  max_token_str = str_deep_copy(max_token_str, cpool_new_text);
 
   // make sure the first two tokens don't == max_token
   String l = str_deep_copy(old_text[0], cpool_new_text);
@@ -61,7 +69,7 @@ char *get_max_token(const StrArr *arr, StrArr *new_text, CPool *cpool_new_text,
   String curr;
   size_t i = 2;
   if (!(strcmp(tmp.str, max_token))) {
-    l = max_token_str;
+    l = string_max;
     r = str_deep_copy(old_text[2], cpool_new_text);
     i = 3;
   }
@@ -72,7 +80,7 @@ char *get_max_token(const StrArr *arr, StrArr *new_text, CPool *cpool_new_text,
     tmp = str_merge(r, curr, cpool_new_text);
     // found matching pair
     if (!strcmp(tmp.str, max_token)) {
-      r = max_token_str;
+      r = string_max;
     } else {
       strArr_insert(new_text, l);
       tmp = str_merge(l, r, cpool_new_text);
@@ -88,9 +96,9 @@ char *get_max_token(const StrArr *arr, StrArr *new_text, CPool *cpool_new_text,
   tmp = str_merge(r, curr, cpool_new_text);
   // token found
   if (!strcmp(tmp.str, max_token)) {
-    tmp = str_merge(l, max_token_str, cpool_new_text);
+    tmp = str_merge(l, string_max, cpool_new_text);
     dic_insert_dic(dic, tmp.str);
-    strArr_insert(new_text, max_token_str);
+    strArr_insert(new_text, string_max);
   } else {
     tmp = str_merge(l, r, cpool_new_text);
     dic_insert_dic(dic, tmp.str);
@@ -99,17 +107,17 @@ char *get_max_token(const StrArr *arr, StrArr *new_text, CPool *cpool_new_text,
     strArr_insert(new_text, r);
     strArr_insert(new_text, curr);
   }
-  return dic_reset(dic);
+  char *new_max = str_deep_copy_cstring(dic->max_token, cpool_new_text);
+  dic_reset(dic);
+  return new_max;
 }
 
-/*
- ***************************************************
-                    THREADED VERSIONS
- ***************************************************
- */
+
+*/
 
 // the file name will always be ../data/data.txt
 void read_file_thread(StrArr *arr, CPool *cpool, size_t start, size_t end) {
+  // FILE *file = fopen("../data/data.txt", "rb");
   FILE *file = fopen("../data/data.txt", "rb");
   if (file == NULL) {
     perror("Couldn't Open file");

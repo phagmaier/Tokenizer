@@ -30,15 +30,19 @@ typedef struct StrArr {
 } StrArr;
 
 CPool cPool_make(size_t size);
+CPool *cPool_make_ptr(size_t size);
 CPool cPool_make_default();
 void cPool_grow(CPool *pool);
 char *cPool_get(CPool *pool, unsigned short size);
 String str_deep_copy(const String string, CPool *cpool);
+char *str_deep_copy_cstring(const char *str, CPool *cpool);
+String char_deep_copy_cstring(const char *str, CPool *cpool);
 String str_merge(const String l, const String r, CPool *cpool);
 String str_from_char(const char c, CPool *cpool);
 String str_from_chars(const char l, const char r, CPool *cpool);
 StrArr strArr_make(size_t size);
 StrArr strArr_make_default();
+StrArr *strArr_make_ptr(size_t size);
 
 // consider this a private function
 // call append cause string must be unique

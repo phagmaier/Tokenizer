@@ -5,10 +5,10 @@
 
 StrArr read_text(const char *fileName, CPool *cpool);
 
-char *first_get_max_tokens(StrArr *text, Dic *dic, CPool *cpoolPairs);
+char *first_get_max_token(const StrArr *text, Dic *dic, CPool *cpool_new_text);
 
 char *get_max_token(const StrArr *arr, StrArr *new_text, CPool *cpool_new_text,
-                    Dic *dic, char *max_token);
+                    Dic *dic, const char *max_token);
 
 /*
  ***************************************************

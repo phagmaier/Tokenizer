@@ -1,6 +1,0 @@
-1. Add threads
-2. Clean up the StrArr you don't actually need to make it dynamic
-  --well kind of. Needs to be allocated on heap but the max size will always be at most the 
-    size of the original array. It will shrink as you merge might save you something on checks
-    Not a lot but because it's such a repetitive action it may save some very limited time
-3. 
