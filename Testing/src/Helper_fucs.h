@@ -15,12 +15,17 @@ typedef struct ThreadData {
   char const *filename;
   size_t start;
   size_t bytes;
+  StrArr *text;
+  StrArr *new_text;
+  CPool *pool_text;
+  CPool *pool_new_text;
   Dic *batch_dic;
   DicSafe *global_dic;
 } ThreadData;
 
 typedef struct ThreadDataList {
   size_t batches;
+  size_t num_threads;
   size_t *num_tokens;
   ThreadData *data;
 } ThreadDataList;

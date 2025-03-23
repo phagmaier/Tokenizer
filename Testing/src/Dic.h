@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-// all your nodes should be of type String not char*
+// GLOBAL
 typedef struct DicSafe {
   pthread_mutex_t lock;
   CPool cpool;

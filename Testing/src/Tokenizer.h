@@ -15,4 +15,5 @@ char *get_max_token(const StrArr *arr, StrArr *new_text, CPool *cpool_new_text,
                     THREADED VERSIONS
  ***************************************************
  */
-void read_file_thread(StrArr *arr, CPool *cpool, size_t start, size_t end);
+
+void *tokenizer_read_file(void *varg);

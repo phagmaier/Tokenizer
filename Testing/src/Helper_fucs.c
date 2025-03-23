@@ -134,6 +134,7 @@ ThreadDataList thread_data_make(const char *filename, const size_t vocab_size,
 
   ThreadDataList arr;
   arr.batches = num_batches;
+  arr.num_threads = num_threads;
   arr.num_tokens = (size_t *)malloc(num_batches * num_threads * sizeof(size_t));
   arr.data =
       (ThreadData *)malloc(num_batches * num_threads * sizeof(ThreadData));
@@ -142,10 +143,20 @@ ThreadDataList thread_data_make(const char *filename, const size_t vocab_size,
   size_t total_tokens = 0;
 
   DicSafe *global_dic = dicSafe_make_dic(vocab_size);
-  Dic *batch_dic = dic_make_dic(100000); // hardcoding this
+  Dic *batch_dic = dic_make_dic(1000000); // hardcoding this
+
+  StrArr **arrs = (StrArr **)malloc(sizeof(StrArr *) * num_threads * 2);
+  CPool **pools = (CPool **)malloc(sizeof(CPool *) * num_threads * 2);
+
+  for (size_t i = 0; i < num_threads * 2; ++i) {
+    arrs[i] = strArr_make_ptr((base_batch_size + 1) / num_threads + 1);
+    pools[i] = cPool_make_ptr(((base_batch_size + 1) / num_threads + 1) * 2);
+  }
 
   size_t start = 0;
   for (size_t i = 0; i < num_batches; ++i) {
+
+    size_t ptr_count = 0;
     size_t batch_size = base_batch_size + (i < leftover_bytes ? 1 : 0);
     size_t batch_tokens = tokens_per_batch + (i < leftover_tokens ? 1 : 0);
 
@@ -160,6 +171,10 @@ ThreadDataList thread_data_make(const char *filename, const size_t vocab_size,
       data.filename = filename;
       data.start = start;
       data.bytes = thread_base_size + (x < thread_extra ? 1 : 0);
+      data.pool_text = pools[ptr_count];
+      data.text = arrs[ptr_count++];
+      data.pool_new_text = pools[ptr_count];
+      data.new_text = arrs[ptr_count++];
       start += data.bytes;
       data.batch_dic = batch_dic;
       data.global_dic = global_dic;
@@ -181,6 +196,9 @@ ThreadDataList thread_data_make(const char *filename, const size_t vocab_size,
     printf("ERROR TOKENS DON'T MATCH\n");
   }
 
+  free(arrs);
+  free(pools);
+
   return arr;
 }
 
@@ -188,6 +206,12 @@ ThreadDataList thread_data_make(const char *filename, const size_t vocab_size,
 void thread_data_list_free(ThreadDataList *arr) {
   free(arr->num_tokens);
   free(arr->data[0].global_dic);
-  free(arr->data[1].batch_dic);
+  free(arr->data[0].batch_dic);
+  for (size_t i = 0; i < arr->num_threads; ++i) {
+    free(arr->data[i].text);
+    free(arr->data[i].new_text);
+    free(arr->data[i].pool_text);
+    free(arr->data[i].pool_new_text);
+  }
   free(arr->data);
 }
