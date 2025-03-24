@@ -1,4 +1,5 @@
 #include "StrArr.h"
+#include <stdio.h>
 
 CPool cPool_make(size_t size) {
   CPool pool;
@@ -7,6 +8,16 @@ CPool cPool_make(size_t size) {
   pool.cap = size;
   pool.full = false;
   pool.next = NULL;
+  return pool;
+}
+
+CPool *cPool_make_ptr(size_t size) {
+  CPool *pool = (CPool *)malloc(sizeof(CPool));
+  pool->chars = (char *)malloc(size);
+  pool->size = 0;
+  pool->cap = size;
+  pool->full = false;
+  pool->next = NULL;
   return pool;
 }
 
@@ -21,9 +32,14 @@ CPool cPool_make_default() {
 }
 
 void cPool_grow(CPool *pool) {
+  printf("C POOL GROWING\n");
   CPool *tmp = (CPool *)malloc(sizeof(CPool));
   tmp->cap = pool->cap;
   tmp->chars = (char *)malloc(tmp->cap);
+  if (!tmp->chars) {
+    perror("Couldn't grow Cpool");
+    exit(1);
+  }
   tmp->size = 0;
   tmp->full = false;
   tmp->next = NULL;
@@ -42,6 +58,22 @@ char *cPool_get(CPool *pool, unsigned short size) {
   char *str = pool->chars + pool->size;
   pool->size += size;
   return str;
+}
+
+char *str_deep_copy_cstring(const String *str, CPool *cpool) {
+  char *chars = cPool_get(cpool, str->size);
+  memcpy(chars, str->str, str->size);
+  return chars;
+}
+
+String char_deep_copy_cstring(const char *str, CPool *cpool) {
+  size_t size = strlen(str) + 1;
+  char *chars = cPool_get(cpool, size);
+  String new_string;
+  memcpy(chars, str, size);
+  new_string.size = size;
+  new_string.str = chars;
+  return new_string;
 }
 
 String str_deep_copy(const String string, CPool *cpool) {
@@ -94,6 +126,14 @@ StrArr strArr_make(size_t size) {
   return arr;
 }
 
+StrArr *strArr_make_ptr(size_t size) {
+  StrArr *arr = (StrArr *)malloc(sizeof(StrArr));
+  arr->strings = (String *)malloc(sizeof(String) * size);
+  arr->size = 0;
+  arr->cap = size;
+  return arr;
+}
+
 StrArr strArr_make_default() {
   StrArr arr;
   arr.strings = (String *)malloc(sizeof(String) * DEFAULT_NUM_STRS);
@@ -104,8 +144,13 @@ StrArr strArr_make_default() {
 
 void strArr_insert(StrArr *arr, const String string) {
   if (arr->size == arr->cap) {
+    printf("STRARR GROWING\n");
     arr->cap *= 2;
     arr->strings = (String *)realloc(arr->strings, arr->cap * sizeof(String));
+    if (!arr->strings) {
+      perror("COULDN'T REALLOC ENOUGH MEM FOR STRARRAY");
+      exit(1);
+    }
   }
   arr->strings[(arr->size)++] = string;
 }
@@ -148,6 +193,10 @@ void cPool_reset(CPool *cpool) {
   if (new_size > cpool->cap) {
     cpool->chars = (char *)realloc(cpool->chars, new_size);
     cpool->cap = new_size;
+    if (!cpool->chars) {
+      perror("COULDN'T REALLOC ENOUGH MEM FOR CPOOL CHARS");
+      exit(1);
+    }
   }
   cpool->size = 0;
   cpool->next = NULL;

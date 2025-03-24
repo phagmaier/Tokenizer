@@ -1,32 +1,70 @@
 #pragma once
+#include "StrArr.h"
+#include <pthread.h>
 #include <stdlib.h>
 #include <string.h>
-#define DEFAULT_DIC_SIZE 100000
+
+// GLOBAL
+typedef struct DicSafe {
+  // pthread_mutex_t lock;
+  CPool cpool;
+  char **nodes;
+  size_t size;
+  size_t cap;
+} DicSafe;
+
+size_t dic_hash(const char *s, const size_t cap);
+DicSafe *dicSafe_make_dic(size_t size);
+void dicSafe_init_dic(DicSafe *dic, size_t size);
+void dicSafe_resize(DicSafe *dic);
+bool dicSafe_insert(DicSafe *dic, String *ptr);
+void dicSafe_free(DicSafe *dic);
+
+/*
+typedef struct Node {
+  char *string;
+  size_t count;
+} Node;
+
+typedef struct Dic {
+  pthread_mutex_t lock;
+  Node *nodes;
+  size_t size;
+  size_t cap;
+  String max_token;
+  size_t max_count;
+} Dic;
+Dic *dic_make_dic(size_t size);
+void dic_resize(Dic *dic);
+void dic_insert(Dic *dic, String string);
+void dic_free(Dic *dic);
+void dic_reset(Dic *dic);
+void dic_reset_copy_max_token(Dic *dic, String *string);
+*/
+
+/*NEW DIC*/
 
 typedef struct Node {
   char *string;
   size_t count;
 } Node;
 
-// before you reset and delete all strings in whatever file
-// you need to make sure you allocate enough space for max_token
-// either that or just use a huge array of chars to make sure that the
-// token will always fit and just copy it in
-// but you should do that later after returning the max
-typedef struct Dic {
-  Node *nodes;
+typedef struct Bucket {
+  pthread_mutex_t lock;
   size_t size;
   size_t cap;
-  char *max_token;
+} Bucket;
+
+typedef struct Dic {
+  Bucket *buckets;
+  size_t num_buckets;
+  String max_token;
   size_t max_count;
 } Dic;
 
-void node_init_node(Node *node, char *string);
-void dic_init_dic(Dic *dic);
-Dic dic_make_dic_default();
-Dic dic_make_dic(size_t size);
-size_t dic_hash(const char *s, const size_t cap);
+Dic *dic_make_dic(size_t size);
 void dic_resize(Dic *dic);
-void dic_insert_dic(Dic *dic, char *string);
-char *dic_reset(Dic *dic);
+void dic_insert(Dic *dic, String string);
 void dic_free(Dic *dic);
+void dic_reset(Dic *dic);
+void dic_reset_copy_max_token(Dic *dic, String *string);

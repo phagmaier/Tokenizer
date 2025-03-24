@@ -23,7 +23,7 @@ void *tokenizer_read_file(void *arg) {
     strArr_append_char(text, pool_text, buffer[i]);
     String pair = str_from_chars(buffer[i], buffer[i + 1], pool_pairs);
     dic_insert(dic, pair);
-    printf("%s\n", pair.str);
+    // printf("%s\n", pair.str);
   }
   // get last char
   strArr_append_char(text, pool_text, buffer[bytesRead - 1]);
