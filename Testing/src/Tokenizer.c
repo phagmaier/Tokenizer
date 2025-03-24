@@ -2,7 +2,8 @@
 
 void *tokenizer_read_file(void *arg) {
   ThreadData *data = (ThreadData *)arg;
-  FILE *file = fopen("../data/data.txt", "rb");
+  // FILE *file = fopen("../data/data.txt", "rb");
+  FILE *file = fopen(data->filename, "rb");
   if (file == NULL) {
     perror("Couldn't Open file");
     exit(1);
@@ -11,6 +12,9 @@ void *tokenizer_read_file(void *arg) {
   /***********GET INITIAL STRING AND COUNT PAIRS*********************/
   char *buffer = (char *)malloc(data->bytes);
   size_t bytesRead = fread(buffer, 1, data->bytes, file);
+  printf("READ INTO BUFFER\n");
+  fclose(file);
+  printf("CLOSED FILE\n");
   StrArr *text = data->text;
   CPool *pool_text = data->pool_text;
   CPool *pool_pairs = data->pool_new_text;
@@ -19,12 +23,14 @@ void *tokenizer_read_file(void *arg) {
     strArr_append_char(text, pool_text, buffer[i]);
     String pair = str_from_chars(buffer[i], buffer[i + 1], pool_pairs);
     dic_insert(dic, pair);
+    printf("%s\n", pair.str);
   }
   // get last char
   strArr_append_char(text, pool_text, buffer[bytesRead - 1]);
 
   /***********GET INITIAL STRING AND COUNT PAIRS*********************/
   free(buffer);
+  printf("DONE READING FILE READ FILE\n");
   return NULL;
 }
 
@@ -92,8 +98,10 @@ bool tokenizer_get_first_token(const size_t num_threads, pthread_t *threads,
                                ThreadData *data, String *max_token,
                                Dic *batch_dic, DicSafe *global_dic) {
 
+  // literally might be faster to read with just the main process not threads
   for (size_t thread = 0; thread < num_threads; ++thread) {
     pthread_create(&threads[thread], NULL, tokenizer_read_file, &data[thread]);
+    // tokenizer_read_file(&data[thread]);
   }
 
   for (size_t thread = 0; thread < num_threads; ++thread) {
@@ -201,7 +209,6 @@ Vocab *tokenize(const char *fileName, const size_t vocab_size,
     while (i < batch_vocab_size) {
       i += tokenizer_get_token(num_threads, threads, data, max_token, batch_dic,
                                global_dic);
-      printf("ON ITERATION: %zu\n", i);
     }
     printf("*********************DONE WITH BATCH");
     printf("%zu*********************", batch);

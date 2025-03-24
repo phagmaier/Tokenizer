@@ -38,7 +38,7 @@ IN THE FUNCTION THAT SPAWNS THE DATA ARR
 int main() {
   time_t start, end;
   /******************PROGRAM CONSTANTS*********************/
-  const char *fileName = "../data/data.txt";
+  const char *fileName = "../data/infiniteJest.txt";
   // const size_t VOCAB_SIZE = 50000;
   const size_t VOCAB_SIZE = 1000;
   /******************PROGRAM CONSTANTS*********************/

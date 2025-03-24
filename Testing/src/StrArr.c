@@ -32,6 +32,7 @@ CPool cPool_make_default() {
 }
 
 void cPool_grow(CPool *pool) {
+  printf("C POOL GROWING\n");
   CPool *tmp = (CPool *)malloc(sizeof(CPool));
   tmp->cap = pool->cap;
   tmp->chars = (char *)malloc(tmp->cap);
@@ -143,6 +144,7 @@ StrArr strArr_make_default() {
 
 void strArr_insert(StrArr *arr, const String string) {
   if (arr->size == arr->cap) {
+    printf("STRARR GROWING\n");
     arr->cap *= 2;
     arr->strings = (String *)realloc(arr->strings, arr->cap * sizeof(String));
     if (!arr->strings) {

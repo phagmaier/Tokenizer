@@ -90,16 +90,6 @@ ThreadDataList thread_data_make(const char *filename, const size_t vocab_size,
   free(arrs);
   free(pools);
 
-  printf("******************************\n");
-  for (size_t batches = 0; batches < arr.batches; ++batches) {
-    for (size_t i = 0; i < num_threads; ++i) {
-      size_t start = arr.data[batches * num_threads + i].start;
-      printf("START: %zu\n", start);
-      printf("END: %zu\n", arr.data[batches * num_threads + i].bytes + start);
-    }
-  }
-  printf("******************************\n");
-
   return arr;
 }
 
