@@ -35,7 +35,7 @@ CPool cPool_make_default();
 void cPool_grow(CPool *pool);
 char *cPool_get(CPool *pool, unsigned short size);
 String str_deep_copy(const String string, CPool *cpool);
-char *str_deep_copy_cstring(const char *str, CPool *cpool);
+char *str_deep_copy_cstring(const String *str, CPool *cpool);
 String char_deep_copy_cstring(const char *str, CPool *cpool);
 String str_merge(const String l, const String r, CPool *cpool);
 String str_from_char(const char c, CPool *cpool);

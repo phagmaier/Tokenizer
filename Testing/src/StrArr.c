@@ -32,7 +32,6 @@ CPool cPool_make_default() {
 }
 
 void cPool_grow(CPool *pool) {
-  printf("cPool growing\n");
   CPool *tmp = (CPool *)malloc(sizeof(CPool));
   tmp->cap = pool->cap;
   tmp->chars = (char *)malloc(tmp->cap);
@@ -60,11 +59,9 @@ char *cPool_get(CPool *pool, unsigned short size) {
   return str;
 }
 
-char *str_deep_copy_cstring(const char *str, CPool *cpool) {
-  size_t size = strlen(str) + 1;
-  char *chars = cPool_get(cpool, size);
-  // String *str = strPool_get(strPool);
-  memcpy(chars, str, size);
+char *str_deep_copy_cstring(const String *str, CPool *cpool) {
+  char *chars = cPool_get(cpool, str->size);
+  memcpy(chars, str->str, str->size);
   return chars;
 }
 
@@ -146,7 +143,6 @@ StrArr strArr_make_default() {
 
 void strArr_insert(StrArr *arr, const String string) {
   if (arr->size == arr->cap) {
-    printf("String array growing\n");
     arr->cap *= 2;
     arr->strings = (String *)realloc(arr->strings, arr->cap * sizeof(String));
     if (!arr->strings) {

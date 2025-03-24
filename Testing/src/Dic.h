@@ -17,7 +17,7 @@ size_t dic_hash(const char *s, const size_t cap);
 DicSafe *dicSafe_make_dic(size_t size);
 void dicSafe_init_dic(DicSafe *dic, size_t size);
 void dicSafe_resize(DicSafe *dic);
-bool dicSafe_insert(DicSafe *dic, char *string);
+bool dicSafe_insert(DicSafe *dic, String *ptr);
 void dicSafe_free(DicSafe *dic);
 
 typedef struct Node {
@@ -30,12 +30,13 @@ typedef struct Dic {
   Node *nodes;
   size_t size;
   size_t cap;
-  String *max_token;
+  String max_token;
   size_t max_count;
 } Dic;
 
 Dic *dic_make_dic(size_t size);
 void dic_resize(Dic *dic);
-void dic_insert(Dic *dic, String *string);
+void dic_insert(Dic *dic, String string);
 void dic_free(Dic *dic);
-String *dic_reset(Dic *dic);
+void dic_reset(Dic *dic);
+void dic_reset_copy_max_token(Dic *dic, String *string);

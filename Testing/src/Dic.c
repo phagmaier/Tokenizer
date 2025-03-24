@@ -24,7 +24,7 @@ void dicSafe_init_dic(DicSafe *dic, size_t size) {
   dic->cpool = cPool_make(size * 5); // 5 characters per word should be plentty
   dic->nodes = (char **)calloc(size, sizeof(char *));
   if (!dic->nodes) {
-    perror("Couldn't even initialize Safe Dic");
+    perror("Couldn't initialize Safe Dic");
     exit(1);
   }
   dic->size = 0;
@@ -37,7 +37,7 @@ DicSafe *dicSafe_make_dic(size_t size) {
   dic->cpool = cPool_make(size * 5); // 5 characters per word should be plentty
   dic->nodes = (char **)calloc(size, sizeof(char *));
   if (!dic->nodes) {
-    perror("Couldn't even initialize Safe Dic");
+    perror("Couldn't initialize Safe Dic");
     exit(1);
   }
   dic->size = 0;
@@ -69,15 +69,15 @@ void dicSafe_resize(DicSafe *dic) {
 }
 
 // tue for new insert false for old
-bool dicSafe_insert(DicSafe *dic, char *string) {
+bool dicSafe_insert(DicSafe *dic, String *ptr) {
+  const char *string = ptr->str;
   pthread_mutex_lock(&dic->lock);
   if (dic->size * 2 >= dic->cap) {
     dicSafe_resize(dic);
   }
   size_t index = dic_hash(string, dic->cap);
   if (!dic->nodes[index]) {
-    // node_init_node(&dic->nodes[index], string);
-    dic->nodes[index] = str_deep_copy_cstring(string, &dic->cpool);
+    dic->nodes[index] = str_deep_copy_cstring(ptr, &dic->cpool);
     ++(dic->size);
     pthread_mutex_unlock(&dic->lock);
     return true;
@@ -90,7 +90,7 @@ bool dicSafe_insert(DicSafe *dic, char *string) {
     index = (index + 1) % dic->cap;
   }
 
-  dic->nodes[index] = str_deep_copy_cstring(string, &dic->cpool);
+  dic->nodes[index] = str_deep_copy_cstring(ptr, &dic->cpool);
   ++(dic->size);
   pthread_mutex_unlock(&dic->lock);
   return true;
@@ -109,7 +109,7 @@ Dic *dic_make_dic(size_t size) {
   dic->nodes = (Node *)calloc(size, sizeof(Node));
   dic->size = 0;
   dic->cap = size;
-  dic->max_token = NULL;
+  // dic->max_token = NULL;
   dic->max_count = 0;
   return dic;
 }
@@ -136,9 +136,9 @@ void dic_resize(Dic *dic) {
   free(old_nodes);
 }
 
-void dic_insert(Dic *dic, String *string) {
+void dic_insert(Dic *dic, String string) {
   pthread_mutex_lock(&dic->lock);
-  char *str = string->str;
+  char *str = string.str;
   if (dic->size * 2 >= dic->cap) {
     dic_resize(dic);
   }
@@ -173,11 +173,15 @@ void dic_insert(Dic *dic, String *string) {
   return;
 }
 
-String *dic_reset(Dic *dic) {
+void dic_reset(Dic *dic) {
   memset(dic->nodes, 0, sizeof(Node) * dic->cap);
   dic->size = 0;
   dic->max_count = 0;
-  return dic->max_token;
+}
+
+void dic_reset_copy_max_token(Dic *dic, String *string) {
+  string->str = memcpy(string->str, dic->max_token.str, dic->max_token.size);
+  dic_reset(dic);
 }
 
 void dic_free(Dic *dic) {
