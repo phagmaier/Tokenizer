@@ -51,19 +51,23 @@ typedef struct Node {
 
 typedef struct Bucket {
   pthread_mutex_t lock;
+  Node *nodes;
   size_t size;
   size_t cap;
 } Bucket;
 
 typedef struct Dic {
-  Bucket *buckets;
+  pthread_mutex_t lock;
+  Bucket **buckets;
   size_t num_buckets;
   String max_token;
   size_t max_count;
 } Dic;
 
-Dic *dic_make_dic(size_t size);
-void dic_resize(Dic *dic);
+Bucket *make_bucket(size_t size);
+Dic *dic_make_dic(size_t bucket_size, size_t num_buckets);
+void update_max(Dic *dic, String string);
+void bucket_resize(Bucket *bucket);
 void dic_insert(Dic *dic, String string);
 void dic_free(Dic *dic);
 void dic_reset(Dic *dic);

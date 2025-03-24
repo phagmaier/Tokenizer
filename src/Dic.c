@@ -1,5 +1,6 @@
 #include "Dic.h"
 #include "StrArr.h"
+#include <pthread.h>
 
 size_t dic_hash(const char *s, const size_t cap) {
   size_t hash = 0;
@@ -100,119 +101,39 @@ void dicSafe_free(DicSafe *dic) {
   cPool_free(&dic->cpool);
   free(dic->nodes);
   dic->size = 0;
-  // pthread_mutex_destroy(&dic->lock);
-}
-/*OLD VERSION*/
-
-/*
-Dic *dic_make_dic(size_t size) {
-  Dic *dic = (Dic *)malloc(sizeof(Dic));
-  pthread_mutex_init(&dic->lock, NULL);
-  dic->nodes = (Node *)calloc(size, sizeof(Node));
-  dic->size = 0;
-  dic->cap = size;
-  // dic->max_token = NULL;
-  dic->max_count = 0;
-  return dic;
-}
-void dic_resize(Dic *dic) {
-  printf("Hashmap growing\n");
-  size_t old_cap = dic->cap;
-  size_t new_cap = dic->cap * 2;
-  dic->cap = new_cap;
-  Node *old_nodes = dic->nodes;
-  Node *new_nodes = (Node *)calloc(new_cap, sizeof(Node));
-  if (!new_nodes) {
-    perror("Couldn't resize safe Dic");
-    exit(1);
-  }
-  for (size_t i = 0; i < old_cap; ++i) {
-    if (old_nodes[i].count) {
-      size_t index = dic_hash(old_nodes[i].string, new_cap);
-      while (new_nodes[index].count) {
-        index = (index + 1) % new_cap;
-      }
-      new_nodes[index] = old_nodes[i];
-    }
-  }
-  dic->nodes = new_nodes;
-  free(old_nodes);
-}
-
-void dic_insert(Dic *dic, String string) {
-  pthread_mutex_lock(&dic->lock);
-  char *str = string.str;
-  if (dic->size * 2 >= dic->cap) {
-    dic_resize(dic);
-  }
-  size_t index = dic_hash(str, dic->cap);
-  if (!dic->nodes[index].count) {
-    dic->nodes[index].string = str;
-    dic->nodes[index].count = 1;
-    ++(dic->size);
-    if (!dic->max_count) {
-      dic->max_count = 1;
-      dic->max_token = string;
-    }
-    pthread_mutex_unlock(&dic->lock);
-    return;
-  }
-  while (dic->nodes[index].count) {
-    if (!strcmp(str, dic->nodes[index].string)) {
-      ++(dic->nodes[index].count);
-      if (dic->nodes[index].count > dic->max_count) {
-        ++(dic->max_count);
-        dic->max_token = string;
-      }
-      pthread_mutex_unlock(&dic->lock);
-      return;
-    }
-    index = (index + 1) % dic->cap;
-  }
-  dic->nodes[index].string = str;
-  dic->nodes[index].count = 1;
-  ++(dic->size);
-  pthread_mutex_unlock(&dic->lock);
-  return;
-}
-
-void dic_reset(Dic *dic) {
-  memset(dic->nodes, 0, sizeof(Node) * dic->cap);
-  dic->size = 0;
-  dic->max_count = 0;
-}
-
-void dic_reset_copy_max_token(Dic *dic, String *string) {
-  string->str = memcpy(string->str, dic->max_token.str, dic->max_token.size);
-  dic_reset(dic);
-}
-
-void dic_free(Dic *dic) {
-  free(dic->nodes);
   free(dic);
 }
 
-*/
+Bucket *make_bucket(size_t size) {
+  Bucket *bucket = (Bucket *)malloc(sizeof(Bucket));
+  pthread_mutex_init(&bucket->lock, NULL);
+  bucket->size = 0;
+  bucket->cap = size;
+  bucket->nodes = (Node *)malloc(sizeof(Node) * size);
+  memset(bucket->nodes, 0, sizeof(Node) * size);
+  return bucket;
+}
 
-Dic *dic_make_dic(size_t size) {
+// pthread_mutex_init(&dic->lock, NULL);
+Dic *dic_make_dic(size_t num_buckets, size_t bucket_size) {
   Dic *dic = (Dic *)malloc(sizeof(Dic));
   pthread_mutex_init(&dic->lock, NULL);
-  dic->nodes = (Node *)calloc(size, sizeof(Node));
-  dic->size = 0;
-  dic->cap = size;
-  // dic->max_token = NULL;
+  dic->num_buckets = num_buckets;
+  dic->buckets = (Bucket **)malloc(sizeof(Bucket *) * num_buckets);
+  for (size_t i = 0; i < num_buckets; ++i) {
+    dic->buckets[i] = make_bucket(bucket_size);
+  }
   dic->max_count = 0;
   return dic;
 }
-void dic_resize(Dic *dic) {
-  printf("Hashmap growing\n");
-  size_t old_cap = dic->cap;
-  size_t new_cap = dic->cap * 2;
-  dic->cap = new_cap;
-  Node *old_nodes = dic->nodes;
+void bucket_resize(Bucket *bucket) {
+  const size_t old_cap = bucket->cap;
+  const size_t new_cap = bucket->cap * 2;
+  bucket->cap = new_cap;
+  Node *old_nodes = bucket->nodes;
   Node *new_nodes = (Node *)calloc(new_cap, sizeof(Node));
   if (!new_nodes) {
-    perror("Couldn't resize safe Dic");
+    perror("COULDN'T RESIZE BUCKET");
     exit(1);
   }
   for (size_t i = 0; i < old_cap; ++i) {
@@ -224,50 +145,64 @@ void dic_resize(Dic *dic) {
       new_nodes[index] = old_nodes[i];
     }
   }
-  dic->nodes = new_nodes;
+  bucket->nodes = new_nodes;
   free(old_nodes);
 }
 
+void update_max(Dic *dic, String string) {
+  ++dic->max_count;
+  dic->max_token = string;
+}
+
 void dic_insert(Dic *dic, String string) {
-  pthread_mutex_lock(&dic->lock);
   char *str = string.str;
-  if (dic->size * 2 >= dic->cap) {
-    dic_resize(dic);
+  size_t bucket_index = dic_hash(str, dic->num_buckets);
+  Bucket *bucket = dic->buckets[bucket_index];
+  size_t index = dic_hash(str, bucket->cap);
+  pthread_mutex_lock(&bucket->lock);
+  if (bucket->size * 2 >= bucket->cap) {
+    bucket_resize(bucket);
   }
-  size_t index = dic_hash(str, dic->cap);
-  if (!dic->nodes[index].count) {
-    dic->nodes[index].string = str;
-    dic->nodes[index].count = 1;
-    ++(dic->size);
+  if (!bucket->nodes[index].count) {
+    bucket->nodes[index].string = str;
+    bucket->nodes[index].count = 1;
+    ++(bucket->size);
+    pthread_mutex_unlock(&bucket->lock);
     if (!dic->max_count) {
+      pthread_mutex_lock(&dic->lock);
       dic->max_count = 1;
       dic->max_token = string;
+      pthread_mutex_unlock(&dic->lock);
     }
-    pthread_mutex_unlock(&dic->lock);
     return;
   }
-  while (dic->nodes[index].count) {
-    if (!strcmp(str, dic->nodes[index].string)) {
-      ++(dic->nodes[index].count);
-      if (dic->nodes[index].count > dic->max_count) {
+  while (bucket->nodes[index].count) {
+    if (!strcmp(str, bucket->nodes[index].string)) {
+      ++(bucket->nodes[index].count);
+      pthread_mutex_unlock(&bucket->lock);
+
+      pthread_mutex_lock(&dic->lock);
+      if (bucket->nodes[index].count > dic->max_count) {
         ++(dic->max_count);
         dic->max_token = string;
       }
-      pthread_mutex_unlock(&dic->lock);
+      pthread_mutex_unlock(&bucket->lock);
       return;
     }
-    index = (index + 1) % dic->cap;
+    index = (index + 1) % bucket->cap;
   }
-  dic->nodes[index].string = str;
-  dic->nodes[index].count = 1;
-  ++(dic->size);
-  pthread_mutex_unlock(&dic->lock);
+  bucket->nodes[index].string = str;
+  bucket->nodes[index].count = 1;
+  ++(bucket->size);
+  pthread_mutex_unlock(&bucket->lock);
   return;
 }
 
 void dic_reset(Dic *dic) {
-  memset(dic->nodes, 0, sizeof(Node) * dic->cap);
-  dic->size = 0;
+  for (size_t i = 0; i < dic->num_buckets; ++i) {
+    dic->buckets[i]->size = 0;
+    memset(dic->buckets[i]->nodes, 0, sizeof(Node) * dic->buckets[0]->cap);
+  }
   dic->max_count = 0;
 }
 
@@ -277,6 +212,9 @@ void dic_reset_copy_max_token(Dic *dic, String *string) {
 }
 
 void dic_free(Dic *dic) {
-  free(dic->nodes);
+  for (size_t i = 0; i < dic->num_buckets; ++i) {
+    free(dic->buckets[i]->nodes);
+    free(dic->buckets[i]);
+  }
   free(dic);
 }

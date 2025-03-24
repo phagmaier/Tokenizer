@@ -12,22 +12,20 @@ void *tokenizer_read_file(void *arg) {
   /***********GET INITIAL STRING AND COUNT PAIRS*********************/
   char *buffer = (char *)malloc(data->bytes);
   size_t bytesRead = fread(buffer, 1, data->bytes, file);
-  printf("READ INTO BUFFER\n");
   fclose(file);
-  printf("CLOSED FILE\n");
   StrArr *text = data->text;
   CPool *pool_text = data->pool_text;
   CPool *pool_pairs = data->pool_new_text;
   Dic *dic = data->batch_dic;
+  printf("About to read file\n");
+  printf("NUMBER OF BYTES TO READ: %zu\n", data->bytes);
   for (size_t i = 0; i < bytesRead - 1; ++i) {
     strArr_append_char(text, pool_text, buffer[i]);
     String pair = str_from_chars(buffer[i], buffer[i + 1], pool_pairs);
     dic_insert(dic, pair);
-    // printf("%s\n", pair.str);
   }
-  // get last char
+  printf("HERE?\n");
   strArr_append_char(text, pool_text, buffer[bytesRead - 1]);
-
   /***********GET INITIAL STRING AND COUNT PAIRS*********************/
   free(buffer);
   printf("DONE READING FILE READ FILE\n");
@@ -182,7 +180,6 @@ Vocab *make_vocab(DicSafe *global_dic, size_t num_tokens) {
 Vocab *tokenize(const char *fileName, const size_t vocab_size,
                 const size_t max_bytes_per_thread) {
 
-  printf("IN TOKENIZER\n");
   /******************GET THREAD DATA*********************/
   ThreadDataList data_arr =
       thread_data_make(fileName, vocab_size, max_bytes_per_thread);
@@ -192,9 +189,7 @@ Vocab *tokenize(const char *fileName, const size_t vocab_size,
   String *max_token = data_arr.max_token;
   Dic *batch_dic = data_arr.data[0].batch_dic;
   DicSafe *global_dic = data_arr.data[0].global_dic;
-  printf("GOT THREAD DATA\n");
   /******************GET THREAD DATA*********************/
-  printf("STARTING\n");
   /******************SPAWN AND RUN THREADS*********************/
   for (size_t batch = 0; batch < data_arr.batches; ++batch) {
     printf("*********************");

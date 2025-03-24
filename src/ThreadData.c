@@ -3,6 +3,8 @@
 ThreadDataList thread_data_make(const char *filename, const size_t vocab_size,
                                 const size_t bytes_per_thread) {
 
+  const size_t num_buckets = 1000;
+
   const size_t file_bytes = findSize(filename);
 
   // LIMITING NUMBER OF THREADS FOR NOW TO 8
@@ -35,7 +37,8 @@ ThreadDataList thread_data_make(const char *filename, const size_t vocab_size,
   size_t total_tokens = 0;
 
   DicSafe *global_dic = dicSafe_make_dic(vocab_size);
-  Dic *batch_dic = dic_make_dic(1000000); // hardcoding this
+  Dic *batch_dic =
+      dic_make_dic(num_buckets, base_batch_size / (num_buckets / 2));
 
   StrArr **arrs = (StrArr **)malloc(sizeof(StrArr *) * num_threads * 2);
   CPool **pools = (CPool **)malloc(sizeof(CPool *) * num_threads * 2);
