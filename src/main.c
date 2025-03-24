@@ -38,13 +38,13 @@ IN THE FUNCTION THAT SPAWNS THE DATA ARR
 int main() {
   time_t start, end;
   /******************PROGRAM CONSTANTS*********************/
-  const char *fileName = "../data/infiniteJest.txt";
+  const char *fileName = "../data/data.txt";
   // const size_t VOCAB_SIZE = 50000;
-  const size_t VOCAB_SIZE = 10000;
+  const size_t VOCAB_SIZE = 1000;
+  // const float alloted_memory = .5;
   /******************PROGRAM CONSTANTS*********************/
-  const size_t MAX_BYTES_PER_THREAD = 2000000; // Maximum bytes per batch
   time(&start);
-  Vocab *vocab_arr = tokenize(fileName, VOCAB_SIZE, MAX_BYTES_PER_THREAD);
+  Vocab *vocab_arr = tokenize(fileName, VOCAB_SIZE);
   time(&end);
   double elapsed = difftime(end, start);
   int hours = elapsed / 3600;

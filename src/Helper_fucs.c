@@ -1,7 +1,4 @@
 #include "Helper_fucs.h"
-#include "Dic.h"
-#include "StrArr.h"
-#include <string.h>
 
 size_t get_num_threads() {
   long cores = sysconf(_SC_NPROCESSORS_ONLN);
@@ -24,40 +21,13 @@ size_t findSize(const char *fileName) {
   return res;
 }
 
-// megabytes of ram free
-size_t get_ram() {
-#ifdef _WIN32
-  MEMORYSTATUSEX statex;
-  statex.dwLength = sizeof(statex);
-  if (GlobalMemoryStatusEx(&statex)) {
-    return (statex.ullAvailPhys / 1024 / 1024) * .5;
-  } else {
-    perror("COULD NOT RETRIEVE RAM INFO");
-    exit(1);
-  }
-
-#elif defined(__linux__)
-  struct sysinfo info;
-  if (sysinfo(&info) == 0) {
-    return (info.totalram / 1024 / 1024) * .5;
-  } else {
-    perror("COULD NOT RETRIEVE RAM INFO");
-    exit(1);
-  }
-
-#elif defined(__APPLE__)
-  int mib[2] = {CTL_HW, HW_MEMSIZE};
-  unsigned long long mem;
-  size_t len = sizeof(mem);
-  if (sysctl(mib, 2, &mem, &len, NULL, 0) == 0) {
-    return (mem / 1024 / 1024) * .5;
-  } else {
-    perror("COULD NOT RETRIEVE RAM INFO");
-    exit(1);
-  }
-
-#else
-  perror("Unsupported OS");
-  exit(1);
-#endif
+void swap_arrs(StrArr **l, StrArr **r) {
+  StrArr *tmp = *l;
+  *l = *r;
+  *r = tmp;
+}
+void swap_pools(CPool **l, CPool **r) {
+  CPool *tmp = *l;
+  *l = *r;
+  *r = tmp;
 }

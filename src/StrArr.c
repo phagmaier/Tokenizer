@@ -1,5 +1,4 @@
 #include "StrArr.h"
-#include <stdio.h>
 
 CPool cPool_make(size_t size) {
   CPool pool;
@@ -32,7 +31,7 @@ CPool cPool_make_default() {
 }
 
 void cPool_grow(CPool *pool) {
-  printf("C POOL GROWING\n");
+  // printf("CPOOL GROWING\n");
   CPool *tmp = (CPool *)malloc(sizeof(CPool));
   tmp->cap = pool->cap;
   tmp->chars = (char *)malloc(tmp->cap);
@@ -48,6 +47,10 @@ void cPool_grow(CPool *pool) {
 
 char *cPool_get(CPool *pool, unsigned short size) {
   while (pool->full) {
+    if (!pool->next) {
+      perror("SOMETHING BROKEN IN CPOOL");
+      exit(1);
+    }
     pool = pool->next;
   }
   if (pool->size + size >= pool->cap) {
@@ -111,7 +114,7 @@ String str_from_chars(const char l, const char r, CPool *cpool) {
   char *chars = cPool_get(cpool, 3);
   chars[0] = l;
   chars[1] = r;
-  chars[2] = r;
+  chars[2] = 0;
   String str;
   str.size = 3;
   str.str = chars;
@@ -178,7 +181,11 @@ void strArr_append_merge(StrArr *arr, CPool *cPool, const String src1,
 }
 
 void StrArr_reset(StrArr *arr) { arr->size = 0; }
-void StrArr_free(StrArr *arr) { free(arr->strings); }
+void StrArr_free(StrArr *arr) {
+  printf("FREEING STRARR\n");
+  free(arr->strings);
+  printf("STRARR FREED\n");
+}
 
 void cPool_reset(CPool *cpool) {
   CPool *tmp = cpool->next;
@@ -204,6 +211,7 @@ void cPool_reset(CPool *cpool) {
 }
 
 void cPool_free(CPool *cpool) {
+  printf("FREEING CPOL\n");
   CPool *tmp = cpool->next;
   CPool *tmp2;
   while (tmp) {
@@ -216,6 +224,7 @@ void cPool_free(CPool *cpool) {
   cpool->size = 0;
   cpool->cap = 0;
   cpool->next = NULL;
+  printf("CPOOL FREED\n");
 }
 
 void print_arr(const StrArr *arr) {

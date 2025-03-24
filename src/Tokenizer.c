@@ -1,46 +1,34 @@
 #include "Tokenizer.h"
 
-void *tokenizer_read_file(void *arg) {
-  ThreadData *data = (ThreadData *)arg;
-  // FILE *file = fopen("../data/data.txt", "rb");
-  FILE *file = fopen(data->filename, "rb");
+void tokenizer_read_file(const char *fileName, StrArr *text, CPool *text_pool,
+                         CPool *pairs_pool, Dic *dic, size_t start,
+                         size_t bytes) {
+
+  FILE *file = fopen(fileName, "rb");
   if (file == NULL) {
     perror("Couldn't Open file");
     exit(1);
   }
-  fseek(file, data->start, SEEK_SET);
+  fseek(file, start, SEEK_SET);
   /***********GET INITIAL STRING AND COUNT PAIRS*********************/
-  char *buffer = (char *)malloc(data->bytes);
-  size_t bytesRead = fread(buffer, 1, data->bytes, file);
+  char *buffer = (char *)malloc(bytes);
+  size_t bytesRead = fread(buffer, 1, bytes, file);
   fclose(file);
-  StrArr *text = data->text;
-  CPool *pool_text = data->pool_text;
-  CPool *pool_pairs = data->pool_new_text;
-  Dic *dic = data->batch_dic;
-  printf("About to read file\n");
-  printf("NUMBER OF BYTES TO READ: %zu\n", data->bytes);
   for (size_t i = 0; i < bytesRead - 1; ++i) {
-    strArr_append_char(text, pool_text, buffer[i]);
-    String pair = str_from_chars(buffer[i], buffer[i + 1], pool_pairs);
+    strArr_append_char(text, text_pool, buffer[i]);
+    String pair = str_from_chars(buffer[i], buffer[i + 1], pairs_pool);
     dic_insert(dic, pair);
   }
-  printf("HERE?\n");
-  strArr_append_char(text, pool_text, buffer[bytesRead - 1]);
-  /***********GET INITIAL STRING AND COUNT PAIRS*********************/
+  strArr_append_char(text, text_pool, buffer[bytesRead - 1]);
   free(buffer);
-  printf("DONE READING FILE READ FILE\n");
-  return NULL;
 }
 
-void *tokenizer_find_max(void *arg) {
-  ThreadData *data = (ThreadData *)arg;
-  CPool *pool = data->pool_new_text;
-  String string_max = str_deep_copy(*data->max_token, pool);
-  StrArr *new_text = data->new_text;
-  const String *old_text = data->text->strings;
-  const size_t text_size = data->text->size - 1;
-  const char *max_token = data->max_token->str;
-  Dic *batch_dic = data->batch_dic;
+void tokenizer_find_max(const StrArr *text, StrArr *new_text, CPool *pool,
+                        String former_max, Dic *dic) {
+  String string_max = str_deep_copy(former_max, pool);
+  const String *old_text = text->strings;
+  const size_t text_size = text->size - 1;
+  const char *max_token = string_max.str;
 
   // make sure the first two tokens don't == max_token
   String l = str_deep_copy(old_text[0], pool);
@@ -64,88 +52,28 @@ void *tokenizer_find_max(void *arg) {
     } else {
       strArr_insert(new_text, l);
       tmp = str_merge(l, r, pool);
-      dic_insert(batch_dic, tmp);
+      dic_insert(dic, tmp);
       l = r;
       r = curr;
     }
   }
 
-  // FOR THE LAST COUPLE TOKENS
   strArr_insert(new_text, l);
   curr = str_deep_copy(old_text[text_size], pool);
   tmp = str_merge(r, curr, pool);
   // token found
   if (!strcmp(tmp.str, max_token)) {
     tmp = str_merge(l, string_max, pool);
-    dic_insert(batch_dic, tmp);
+    dic_insert(dic, tmp);
     strArr_insert(new_text, string_max);
   } else {
     tmp = str_merge(l, r, pool);
-    dic_insert(batch_dic, tmp);
+    dic_insert(dic, tmp);
     tmp = str_merge(r, curr, pool);
-    dic_insert(batch_dic, tmp);
+    dic_insert(dic, tmp);
     strArr_insert(new_text, r);
     strArr_insert(new_text, curr);
   }
-  return NULL;
-}
-
-// this should actually also return bool cause
-// calling it on multiple threads
-bool tokenizer_get_first_token(const size_t num_threads, pthread_t *threads,
-                               ThreadData *data, String *max_token,
-                               Dic *batch_dic, DicSafe *global_dic) {
-
-  // literally might be faster to read with just the main process not threads
-  for (size_t thread = 0; thread < num_threads; ++thread) {
-    pthread_create(&threads[thread], NULL, tokenizer_read_file, &data[thread]);
-    // tokenizer_read_file(&data[thread]);
-  }
-
-  for (size_t thread = 0; thread < num_threads; ++thread) {
-    pthread_join(threads[thread], NULL);
-  }
-
-  dic_reset_copy_max_token(batch_dic, max_token);
-  for (size_t thread = 0; thread < num_threads; ++thread) {
-    cPool_reset(data[thread].pool_new_text);
-    data[thread].max_token = max_token;
-  }
-  return dicSafe_insert(global_dic, max_token);
-}
-
-bool tokenizer_get_token(const size_t num_threads, pthread_t *threads,
-                         ThreadData *data, String *max_token, Dic *batch_dic,
-                         DicSafe *global_dic) {
-
-  for (size_t thread = 0; thread < num_threads; ++thread) {
-    pthread_create(&threads[thread], NULL, tokenizer_find_max, &data[thread]);
-  }
-
-  for (size_t thread = 0; thread < num_threads; ++thread) {
-    pthread_join(threads[thread], NULL);
-  }
-
-  dic_reset_copy_max_token(batch_dic, max_token);
-  CPool *p_tmp;
-  StrArr *a_tmp;
-  for (size_t thread = 0; thread < num_threads; ++thread) {
-
-    cPool_reset(data[thread].pool_new_text);
-    StrArr_reset(data[thread].text);
-    data[thread].max_token = max_token;
-
-    // swaping
-    p_tmp = data[thread].pool_text;
-    a_tmp = data[thread].text;
-    data[thread].pool_text = data[thread].pool_new_text;
-    data[thread].pool_new_text = p_tmp;
-    data[thread].text = data[thread].new_text;
-    data[thread].new_text = a_tmp;
-    // swaping
-  }
-  // swap before return
-  return dicSafe_insert(global_dic, max_token);
 }
 
 void vocab_free(size_t num_tokens, Vocab *vocab) {
@@ -170,54 +98,81 @@ Vocab *make_vocab(DicSafe *global_dic, size_t num_tokens) {
   return vocab;
 }
 
-/****************************************************
- eventually you willneed to get rid of
- max bytes per thread and make it
- max bytes per batch
- and it won't be a param you'll calculate dynamically
- In the function where you get thread data
- ****************************************************/
-Vocab *tokenize(const char *fileName, const size_t vocab_size,
-                const size_t max_bytes_per_thread) {
+void *thread_loop(void *arg) {
+  ThreadData *data = (ThreadData *)arg;
+  size_t count = 0;
+  const size_t limit = data->vocab_size;
 
-  /******************GET THREAD DATA*********************/
-  ThreadDataList data_arr =
-      thread_data_make(fileName, vocab_size, max_bytes_per_thread);
+  tokenizer_read_file(data->filename, data->text, data->pool_text,
+                      data->pool_new_text, data->thread_dic, data->start,
+                      data->bytes);
+
+  dic_reset_copy_max_token(data->thread_dic, data->max_token);
+
+  cPool_reset(data->pool_new_text);
+
+  count += dicSafe_insert(data->global_dic, data->max_token);
+
+  while (count < limit) {
+
+    tokenizer_find_max(data->text, data->new_text, data->pool_new_text,
+                       *data->max_token, data->thread_dic);
+
+    dic_reset_copy_max_token(data->thread_dic, data->max_token);
+
+    StrArr_reset(data->text);
+
+    cPool_reset(data->pool_text);
+
+    swap_arrs(&data->text, &data->new_text);
+
+    swap_pools(&data->pool_text, &data->pool_new_text);
+
+    count += dicSafe_insert(data->global_dic, data->max_token);
+  }
+  dic_reset(data->thread_dic);
+
+  StrArr_reset(data->text);
+
+  StrArr_reset(data->new_text);
+
+  cPool_reset(data->pool_new_text);
+
+  cPool_reset(data->pool_text);
+  return NULL;
+}
+
+void thread_starter(pthread_t *threads, ThreadData *data, size_t num_threads) {
+  for (size_t thread = 0; thread < num_threads; ++thread) {
+    pthread_create(&threads[thread], NULL, thread_loop, &data[thread]);
+  }
+  for (size_t thread = 0; thread < num_threads; ++thread) {
+    pthread_join(threads[thread], NULL);
+  }
+}
+
+Vocab *tokenize(const char *fileName, const size_t vocab_size) {
+  ThreadDataList data_arr = thread_data_make(fileName, vocab_size);
 
   const size_t num_threads = data_arr.num_threads;
   pthread_t *threads = malloc(sizeof(pthread_t) * num_threads);
-  String *max_token = data_arr.max_token;
-  Dic *batch_dic = data_arr.data[0].batch_dic;
   DicSafe *global_dic = data_arr.data[0].global_dic;
-  /******************GET THREAD DATA*********************/
-  /******************SPAWN AND RUN THREADS*********************/
+
   for (size_t batch = 0; batch < data_arr.batches; ++batch) {
     printf("*********************");
     printf("STARTING BATCH: %zu / %zu", batch, data_arr.batches);
-    printf("*********************\n");
-
-    const size_t batch_vocab_size = data_arr.num_tokens[batch];
+    printf("*********************\n\n");
 
     ThreadData *data = &data_arr.data[batch * num_threads];
-    size_t i = tokenizer_get_first_token(num_threads, threads, data, max_token,
-                                         batch_dic, global_dic);
-    while (i < batch_vocab_size) {
-      i += tokenizer_get_token(num_threads, threads, data, max_token, batch_dic,
-                               global_dic);
-    }
+
+    thread_starter(threads, data, num_threads);
+
     printf("*********************DONE WITH BATCH");
-    printf("%zu*********************", batch);
+    printf(" %zu*********************\n\n\n", batch);
   }
   Vocab *vocab_arr = make_vocab(global_dic, vocab_size);
 
-  /******************CLEAN UP*********************/
   free(threads);
-  /******************IMPORTANT*********************/
-  // MAKE SURE YOU EITHER COPY OR STORE THE GLOBAL
-  // DICTIONARY TOKEN VALUES SOMEWHERE FIRST
   thread_data_list_free(&data_arr);
-  /******************IMPORTANT*********************/
-
-  /******************CLEAN UP*********************/
   return vocab_arr;
 }

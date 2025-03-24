@@ -1,24 +1,19 @@
+
 #include "ThreadData.h"
-// eventually take out bytes per thread and determine that in here
-ThreadDataList thread_data_make(const char *filename, const size_t vocab_size,
-                                const size_t bytes_per_thread) {
 
-  const size_t num_buckets = 1000;
-
+ThreadDataList thread_data_make(const char *filename, const size_t vocab_size) {
   const size_t file_bytes = findSize(filename);
+  const size_t num_threads = get_num_threads();
 
-  // LIMITING NUMBER OF THREADS FOR NOW TO 8
-  const size_t num_threads = get_num_threads() > 8 ? 8 : get_num_threads();
+  // Define a hard limit of 500,000 characters per batch
+  const size_t max_chars_per_batch = 500000;
 
-  // Compute the number of batches (ensure it's at least 1)
-  size_t num_batches = (file_bytes + (num_threads * bytes_per_thread) - 1) /
-                       (num_threads * bytes_per_thread);
+  // Compute the number of batches with an upper limit on batch size
+  size_t num_batches =
+      (file_bytes + max_chars_per_batch - 1) / max_chars_per_batch;
+  num_batches = (num_batches < 1) ? 1 : num_batches;
 
-  if (num_batches == 0) {
-    num_batches = 1;
-  }
-
-  // Compute base batch size (integer division)
+  // Compute batch size with the enforced limit
   size_t base_batch_size = file_bytes / num_batches;
   size_t leftover_bytes = file_bytes % num_batches;
 
@@ -29,85 +24,86 @@ ThreadDataList thread_data_make(const char *filename, const size_t vocab_size,
   ThreadDataList arr;
   arr.batches = num_batches;
   arr.num_threads = num_threads;
-  arr.num_tokens = (size_t *)malloc(num_batches * num_threads * sizeof(size_t));
   arr.data =
       (ThreadData *)malloc(num_batches * num_threads * sizeof(ThreadData));
 
   size_t total_bytes = 0;
   size_t total_tokens = 0;
-
   DicSafe *global_dic = dicSafe_make_dic(vocab_size);
-  Dic *batch_dic =
-      dic_make_dic(num_buckets, base_batch_size / (num_buckets / 2));
 
+  // Allocate arrays with proper sizes
   StrArr **arrs = (StrArr **)malloc(sizeof(StrArr *) * num_threads * 2);
   CPool **pools = (CPool **)malloc(sizeof(CPool *) * num_threads * 2);
+  Dic **dics = (Dic **)malloc(sizeof(Dic *) * num_threads * 2);
+  String **max_tokens = (String **)malloc(sizeof(String *) * num_threads);
 
-  for (size_t i = 0; i < num_threads * 2; ++i) {
-    arrs[i] = strArr_make_ptr((base_batch_size + 1) / num_threads + 1);
-    pools[i] = cPool_make_ptr(((base_batch_size + 1) / num_threads + 1) * 2);
+  for (size_t i = 0; i < num_threads; ++i) {
+    for (size_t j = 0; j < 2; ++j) {
+      size_t idx = i * 2 + j;
+      dics[idx] = dic_make(base_batch_size);
+      arrs[idx] = strArr_make_ptr((base_batch_size / num_threads) + 2);
+      pools[idx] = cPool_make_ptr(((base_batch_size / num_threads) + 2) * 2);
+    }
+    max_tokens[i] = (String *)malloc(sizeof(String));
+    max_tokens[i]->str = (char *)malloc(100);
+    max_tokens[i]->size = 0;
   }
-  String *max_token = malloc(sizeof(String));
-  max_token->str = malloc(100); // make sure always has enough mem
-  max_token->size = 0;
-  size_t start = 0;
-  arr.max_token = max_token;
-  for (size_t i = 0; i < num_batches; ++i) {
 
-    size_t ptr_count = 0;
+  size_t start = 0;
+  for (size_t i = 0; i < num_batches; ++i) {
     size_t batch_size = base_batch_size + (i < leftover_bytes ? 1 : 0);
     size_t batch_tokens = tokens_per_batch + (i < leftover_tokens ? 1 : 0);
 
-    // Distribute batch size among threads
+    if (batch_size > max_chars_per_batch) {
+      batch_size = max_chars_per_batch;
+    }
+
     size_t thread_base_size = batch_size / num_threads;
     size_t thread_extra = batch_size % num_threads;
 
     for (size_t x = 0; x < num_threads; ++x) {
-      arr.num_tokens[i * num_threads + x] = batch_tokens;
+      size_t thread_idx = i * num_threads + x;
+      ThreadData *data = &arr.data[thread_idx];
 
-      ThreadData data;
-      data.filename = filename;
-      data.start = start;
-      data.bytes = thread_base_size + (x < thread_extra ? 1 : 0);
-      data.pool_text = pools[ptr_count];
-      data.text = arrs[ptr_count++];
-      data.pool_new_text = pools[ptr_count];
-      data.new_text = arrs[ptr_count++];
-      start += data.bytes;
-      data.batch_dic = batch_dic;
-      data.global_dic = global_dic;
-      data.max_token = max_token;
-      arr.data[i * num_threads + x] = data;
+      data->filename = filename;
+      data->start = start;
+      data->bytes = thread_base_size + (x < thread_extra ? 1 : 0);
+
+      size_t ptr_idx = x * 2;
+      data->pool_text = pools[ptr_idx];
+      data->text = arrs[ptr_idx];
+      data->pool_new_text = pools[ptr_idx + 1];
+      data->new_text = arrs[ptr_idx + 1];
+
+      start += data->bytes;
+      data->thread_dic = dics[x * 2];
+      data->global_dic = global_dic;
+      data->max_token = max_tokens[x];
+      data->vocab_size = batch_tokens;
+
+      printf("DATA START: %zu DATA END: %zu\n", data->start,
+             data->start + data->bytes);
     }
 
     total_bytes += batch_size;
     total_tokens += batch_tokens;
   }
+
   if (total_bytes != file_bytes) {
-    printf("ERROR BYTES DON'T MATCH\n");
+    printf("ERROR BYTES DON'T MATCH: %zu != %zu\n", total_bytes, file_bytes);
   }
+
   if (total_tokens != vocab_size) {
-    printf("ERROR TOKENS DON'T MATCH: \n");
+    printf("ERROR TOKENS DON'T MATCH: %zu != %zu\n", total_tokens, vocab_size);
   }
 
   free(arrs);
   free(pools);
+  free(dics);
 
   return arr;
 }
 
-// be careful with this because you free the dics as well
 void thread_data_list_free(ThreadDataList *arr) {
-  free(arr->num_tokens);
-  free(arr->data[0].global_dic);
-  free(arr->data[0].batch_dic);
-  free(arr->max_token->str);
-  free(arr->max_token);
-  for (size_t i = 0; i < arr->num_threads; ++i) {
-    free(arr->data[i].text);
-    free(arr->data[i].new_text);
-    free(arr->data[i].pool_text);
-    free(arr->data[i].pool_new_text);
-  }
-  free(arr->data);
+  dicSafe_free(arr->data[0].global_dic);
 }
