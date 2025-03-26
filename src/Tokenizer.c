@@ -19,32 +19,19 @@ void write_tokens(SafeDic *global_dic, const char *fileName) {
 }
 
 void tokenizer(char *filename, size_t vocab_tokens, size_t bytes_per_thread,
-               char *output_fileName) {
-
-  time_t start, end;
-  size_t num_threads;
+               char *output_fileName, size_t max_num_threads) {
+  size_t num_threads = max_num_threads;
   ThreadData *data = create_thread_queue(filename, vocab_tokens,
                                          bytes_per_thread, &num_threads);
 
   pthread_t *threads = (pthread_t *)malloc(sizeof(pthread_t) * num_threads);
   // printf("NUMBER OF THREADS: %zu\n", num_threads);
-  time(&start);
   for (size_t thread = 0; thread < num_threads; ++thread) {
     pthread_create(&threads[thread], NULL, thread_starter, &data[thread]);
   }
   for (size_t thread = 0; thread < num_threads; ++thread) {
     pthread_join(threads[thread], NULL);
   }
-  time(&end);
-
-  double elapsed = difftime(end, start);
-  int hours = elapsed / 3600;
-  int minutes = (elapsed - hours * 3600) / 60;
-  int seconds = (int)elapsed % 60;
-  printf("Execution time for JUST the BPE multithreaded algo for %zu VOCAB "
-         "WORDS TOOKS: %d hours, %d "
-         "minutes, %d seconds\n",
-         vocab_tokens, hours, minutes, seconds);
   write_tokens(data[0].global_dic, output_fileName);
   //  freeing
   free(threads);

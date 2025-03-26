@@ -28,6 +28,7 @@ ThreadData *create_thread_queue(char *filename, size_t vocab_tokens,
   }
 
   size_t num_threads = get_num_threads();
+  num_threads = num_threads > (*thread_count) ? (*thread_count) : num_threads;
 
   // Calculate total number of iterations (chunks) needed
   size_t iterations = file_bytes / bytes_per_thread;

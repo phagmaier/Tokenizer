@@ -4,7 +4,7 @@
 #include "Token.h"
 
 void tokenizer(char *filename, size_t vocab_tokens, size_t bytes_per_thread,
-               char *output_fileName);
+               char *output_fileName, size_t max_num_threads);
 
 void *thread_starter(void *args);
 bool get_index(size_t *start, size_t *size, size_t *vocab_goal,
