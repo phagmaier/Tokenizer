@@ -7,9 +7,10 @@
 // Default parameters
 #define DEFAULT_INPUT_FILE "../data/data.txt"
 #define DEFAULT_OUTPUT_FILE "../data/myTokens.txt"
-#define DEFAULT_VOCAB_SIZE 15000
+#define DEFAULT_VOCAB_SIZE 20000
+// #define DEFAULT_VOCAB_SIZE 50000
 #define DEFAULT_BYTES_PER_THREAD 500000
-#define DEFAULT_MAX_NUM_THREADS 4
+#define DEFAULT_MAX_NUM_THREADS 8
 
 int main(int argc, char *argv[]) {
   time_t start, end;

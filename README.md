@@ -1,4 +1,4 @@
-# Runme: A Fast C Tokenizer
+# Tokenizer: A Fast C Tokenizer
 
 This project implements a high-performance tokenizer written in C, designed for efficient text processing. It utilizes multithreading and a custom memory pool for optimized speed and memory management.  The tokenizer employs a Byte Pair Encoding (BPE) algorithm to generate a vocabulary of tokens.
 
@@ -27,7 +27,7 @@ This project implements a high-performance tokenizer written in C, designed for 
 1. **Clone the repository:**
 
    ```bash
-   git clone <repository_url>
+   git clone https://github.com/phagmaier/Tokenizer.git
    ```
 
 2. **Navigate to the project directory:**
@@ -63,9 +63,9 @@ The tokenizer takes the following arguments:
 
 * -i: Input file path (default: ../data/data.txt).
 * -o: Output file path (default: ../data/myTokens.txt).
-* -v: Vocabulary size (default: 15000).
+* -v: Vocabulary size (default: 20000).
 * -b: Bytes per thread (default: 500000).  
-* -t: Maximum number of threads (default: 4).
+* -t: Maximum number of threads (default: 8).
 * The output format is: `<token_id>, <token_string>\n`.
 
 ## Usage Examples
@@ -76,7 +76,7 @@ To run the tokenizer with flags:
 ./runme -i ../data/infiniteJest.txt -v 10000 -b 500000 -o ../data/myTokens.txt -t 8
 ```
 
-Or without. Note this assumes you have a file called data.txt in the ../data directory
+Or without. Note this assumes you have a file called ../data/infiniteJest.txt (it comes with the repo)
 
 ```bash
 ./runme 
@@ -101,10 +101,16 @@ runme/
 └── data/           //Directory where input text and output file resides.
 ```
 
+## PERFORMANCE
+
+With 15 threads on a framework laptop that uses the AMD Ryzen 7040 Series CPUs
+this program was able to process ~3k screenplays \( ~438071393 bytes\) and generate
+50k unique vocab words in ~20 minutes
+
 ## Contributing
 
 This project does not have explicit contribution guidelines.
 
 ## Contact
 
-[Parker Hagmaier] - [parkerhagmaier@gmail.com]
+Parker Hagmaier: <parkerhagmaier@gmail.com>
