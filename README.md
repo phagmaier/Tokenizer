@@ -85,7 +85,7 @@ To run the tokenizer with flags:
 ./runme -i ../data/infiniteJest.txt -v 10000 -b 500000 -o ../data/myTokens.txt -t 8
 ```
 
-Or without. Note this assumes you have a file called ../data/infiniteJest.txt (it comes with the repo)
+Or without
 
 ```bash
 ./runme 
@@ -113,7 +113,7 @@ runme/
 ## PERFORMANCE
 
 With 15 threads on a framework laptop that uses the AMD Ryzen 7040 Series CPUs
-this program was able to process ~3k screenplays \( ~438071393 bytes\) and generate
+this program was able to process ~3k screenplays \(~438071393 bytes\) and generate
 50k unique vocab words in ~20 minutes
 
 ## Contributing
