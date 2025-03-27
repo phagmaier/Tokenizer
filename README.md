@@ -2,6 +2,15 @@
 
 This project implements a high-performance tokenizer written in C, designed for efficient text processing. It utilizes multithreading and a custom memory pool for optimized speed and memory management.  The tokenizer employs a Byte Pair Encoding (BPE) algorithm to generate a vocabulary of tokens.
 
+## NOTE ON CURRENT STATE OF THE PROJECT
+
+1. The current implementation does not limit by word it just always merges the largest pairs
+  * - changing this in the newest update to limit by word
+2. This version was just to test out the algorithm newest version (coming soon) will do it the proper way 
+3. Still need to add a way to then tokenize new test given the current tokens 
+4. Need to add all individual characters 
+5. For this and all future implementations of this we will limit to ASCII characters 
+
 ## Key Features
 
 * **Multithreaded processing:**  Leverages multiple threads to significantly speed up tokenization of large files.
