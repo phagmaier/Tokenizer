@@ -5,7 +5,7 @@ This project implements a high-performance tokenizer written in C, designed for 
 ## NOTE ON CURRENT STATE OF THE PROJECT
 
 1. The current implementation does not limit by word it just always merges the largest pairs
-  * - changing this in the newest update to limit by word
+   - changing this in the newest update to limit by word
 2. This version was just to test out the algorithm newest version (coming soon) will do it the proper way 
 3. Still need to add a way to then tokenize new test given the current tokens 
 4. Need to add all individual characters 
@@ -34,36 +34,36 @@ This project implements a high-performance tokenizer written in C, designed for 
 ## Installation
 
 1. **Clone the repository:**
-
+   
    ```bash
    git clone https://github.com/phagmaier/Tokenizer.git
    ```
 
 2. **Navigate to the project directory:**
-
+   
    ```bash
    cd runme
    ```
 
 3. **Create a build directory:**
-
+   
    ```bash
    mkdir build
    cd build
    ```
 
 4. **Configure the project:**
-
+   
    ```bash
    cmake ..
    ```
 
 5. **Build the project:**
-
+   
    ```bash
    cmake --build .
    ```
-
+   
    This will create the executable `runme` in the `build` directory.  For a release build use `cmake --build . --config Release`.
 
 ## FLAGS
