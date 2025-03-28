@@ -2,3 +2,4 @@ data/
 build/
 build/
 cleaned_text/
+merge.py

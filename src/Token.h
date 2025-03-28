@@ -9,18 +9,24 @@ typedef struct Token {
   unsigned short size;
 } Token;
 
+typedef struct Word {
+  Token *tokens;
+  size_t size;
+  size_t cap;
+} Word;
+
+typedef struct ArrToken {
+  Word *words;
+  size_t size;
+  size_t cap;
+} ArrToken;
+
 typedef struct Mpool {
   char *mem;
   size_t size;
   size_t cap;
   struct Mpool *next;
 } Mpool;
-
-typedef struct ArrToken {
-  Token *tokens;
-  size_t size;
-  size_t cap;
-} ArrToken;
 
 /*TOKEN STUFF*/
 void token_deep_copy(Token *dest, const Token *src, Mpool *pool);
