@@ -51,10 +51,6 @@ size_t mpool_free_heap_count(Mpool *pool);
 /*ARR STUFF*/
 ArrToken *arrToken_make_heap(const size_t cap);
 void arrToken_append_char(ArrToken *arr, const char c, Mpool *pool);
-void arrToken_append_merge(ArrToken *arr, const Token *l, const Token *r,
-                           Mpool *pool);
-void arrToken_append(ArrToken *arr, const Token *token, Mpool *pool);
 void arrToken_reset(ArrToken *arr);
 void arrToken_free_heap(ArrToken *arr);
-void arrToken_free_stack(ArrToken arr);
 /*ARR STUFF DONE*/

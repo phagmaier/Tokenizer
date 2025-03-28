@@ -124,6 +124,9 @@ void mpool_reset(Mpool *pool) {
 }
 /*MEMPOOL STUFF DONE*/
 
+/* WORDS STUFF*/
+/* WORDS STUFF*/
+
 /*ARR TOKEN STUFF*/
 ArrToken *arrToken_make_heap(const size_t cap) {
   if (!cap) {
@@ -136,8 +139,8 @@ ArrToken *arrToken_make_heap(const size_t cap) {
     perror("COULD NOT MAKE ARR ON THE HEAP");
     exit(1);
   }
-  arr->tokens = (Token *)malloc(sizeof(Token) * cap);
-  if (!arr->tokens) {
+  arr->words = (Word *)calloc(cap, sizeof(Word));
+  if (!arr->words) {
     perror("COULD NOT ALLOCATE TOKENS");
     exit(1);
   }
@@ -146,40 +149,16 @@ ArrToken *arrToken_make_heap(const size_t cap) {
   return arr;
 }
 
-void arrToken_append(ArrToken *arr, const Token *token, Mpool *pool) {
-  if (arr->size >= arr->cap) {
-    perror("ARR NOT RESIZABLE");
-    exit(1);
-  }
-  token_deep_copy(&arr->tokens[arr->size], token, pool);
-  ++arr->size;
+void arrToken_reset(ArrToken *arr) {
+  arr->size = 0;
+  memset(arr->words, 0, sizeof(Word) * arr->cap);
 }
-
-void arrToken_append_char(ArrToken *arr, const char c, Mpool *pool) {
-  if (arr->size >= arr->cap) {
-    perror("ARR NOT RESIZABLE");
-    exit(1);
-  }
-  token_deep_copy_char(&arr->tokens[arr->size], c, pool);
-  ++arr->size;
-}
-
-void arrToken_append_merge(ArrToken *arr, const Token *l, const Token *r,
-                           Mpool *pool) {
-  if (arr->size >= arr->cap) {
-    perror("ARR NOT RESIZABLE");
-    exit(1);
-  }
-  token_merge_deep(&arr->tokens[arr->size], l, r, pool);
-  ++arr->size;
-}
-
 void arrToken_free_heap(ArrToken *arr) {
-  free(arr->tokens);
+  for (size_t i = 0; i < arr->size; ++i) {
+    free(arr->words[i].tokens);
+  }
+  free(arr->words);
   free(arr);
 }
 
-void arrToken_free_stack(ArrToken arr) { free(arr.tokens); }
-
-void arrToken_reset(ArrToken *arr) { arr->size = 0; }
 /*ARR TOKEN STUFF DONE*/
