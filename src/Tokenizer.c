@@ -1,5 +1,9 @@
 #include "Tokenizer.h"
 #include "Token.h"
+#define DELIMITERS_SIZE
+
+const char TOKENIZER_DELIMITERS[] =
+    " \t\n\r\f\v.,;:!?()[]{}<>/\\|`~@#$%^&*-+=\'\"";
 
 void write_tokens(SafeDic *global_dic, const char *fileName) {
   FILE *fptr;
@@ -38,17 +42,11 @@ void tokenizer(char *filename, size_t vocab_tokens, size_t bytes_per_thread,
   threadDataList_free(data, num_threads);
 }
 
-// get data if no data then return
-// Think i'm going to have to put this in a massive for loop that
-// doesn't break until you get the get_index thingy
 void *thread_starter(void *args) {
-  // unsigned int seed = time(NULL) ^ pthread_self(); // Unique seed per thread
-  // int id = rand_r(&seed) % 100;
   ThreadData *data = (ThreadData *)args;
   ArrToken *text = data->text;
-  ArrToken *new_text = data->new_text;
   Mpool *pool_text = data->pool_text;
-  Mpool *pool_new_text = data->pool_new_text;
+  Tpool *pool_tokens = data->pool_tokens;
   Dic *dic = data->local_dic;
   SafeDic *global = data->global_dic;
   size_t start;
@@ -56,34 +54,30 @@ void *thread_starter(void *args) {
   size_t vocab_goal;
   size_t vocab_count = 0;
   Token max_token;
+  Token *max_ptr = &max_token;
   while (get_index(&start, &size, &vocab_goal, data->indexes)) {
-    tokenizer_read_file(data->fileName, text, pool_text, pool_new_text, dic,
+    tokenizer_read_file(data->fileName, text, pool_text, pool_tokens, dic,
                         start, size);
-    dic_reset_get_max(dic, &max_token, pool_text);
+    dic_reset_get_max(dic, &max_token);
     vocab_count = safeDic_insert(global, &max_token);
-    mpool_reset(pool_new_text);
-    dumb_swap_thread(&max_token, pool_new_text);
     while (vocab_count < vocab_goal) {
       // printf("%zu/%zu\n", vocab_count, vocab_goal);
-      tokenizer_find_max(text, new_text, pool_new_text, &max_token, dic);
-      dic_reset_get_max(dic, &max_token, pool_new_text);
+      tokenizer_find_max(text, pool_text, max_ptr, dic);
+      dic_reset_get_max(dic, max_ptr);
       arrToken_reset(text);
-      mpool_reset(pool_text);
-      dumb_swap_thread(&max_token, pool_text);
       vocab_count += safeDic_insert(global, &max_token);
-      swap_arr(&text, &new_text);
-      swap_pool(&pool_text, &pool_new_text);
     }
     vocab_count = 0;
     arrToken_reset(text);
-    arrToken_reset(new_text);
+    tpool_reset(pool_tokens);
+    mpool_reset(pool_text);
     // dic_reset(dic);
   }
   return NULL;
 }
 
-void tokenizer_find_max(const ArrToken *text, ArrToken *new_text, Mpool *pool,
-                        Token *former_max, Dic *dic) {
+void tokenizer_find_max(ArrToken *text, Mpool *pool, Token *former_max,
+                        Dic *dic) {
   const Token *old_text = text->tokens;
   const size_t text_size = text->size - 1;
   const char *max_token = former_max->string;
@@ -145,7 +139,7 @@ void tokenizer_find_max(const ArrToken *text, ArrToken *new_text, Mpool *pool,
 }
 
 void tokenizer_read_file(const char *fileName, ArrToken *text, Mpool *pool_text,
-                         Mpool *pairs_pool, Dic *dic, size_t start,
+                         Tpool *pool_token, Dic *dic, size_t start,
                          size_t size) {
 
   FILE *file = fopen(fileName, "rb");
@@ -158,13 +152,17 @@ void tokenizer_read_file(const char *fileName, ArrToken *text, Mpool *pool_text,
   char *buffer = (char *)malloc(size);
   size_t bytesRead = fread(buffer, 1, size, file);
   fclose(file);
-
-  for (size_t i = 0; i < bytesRead - 1; ++i) {
-    arrToken_append_char(text, buffer[i], pool_text);
-    Token pair = token_make_chars(buffer[i], buffer[i + 1], pairs_pool);
-    dic_insert(dic, &pair);
+  size_t i = 0;
+  size_t word_start;
+  size_t word_end;
+  char c = buffer[i];
+  while (i < bytesRead) {
+    word_start = i;
+    while (!strchr(TOKENIZER_DELIMITERS, c)) {
+    }
+    // call some make word fuction and pass in the buffer
+    // the array and both pools
   }
-  arrToken_append_char(text, buffer[bytesRead - 1], pool_text);
   free(buffer);
 }
 

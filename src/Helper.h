@@ -27,6 +27,7 @@ typedef struct ThreadData {
   SafeDic *global_dic;
   ArrToken *text;
   Mpool *pool_text;
+  Tpool *pool_tokens;
 } ThreadData;
 
 size_t get_file_size(const char *filename);
@@ -36,6 +37,3 @@ ThreadData *create_thread_queue(char *filename, size_t vocab_tokens,
                                 size_t bytes_per_thread, size_t *thread_count);
 
 void threadDataList_free(ThreadData *data, size_t num_threads);
-
-void swap_arr(ArrToken **text, ArrToken **new_text);
-void swap_pool(Mpool **text, Mpool **new_text);

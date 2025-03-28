@@ -49,12 +49,6 @@ char *cstr_deep_copy(const Token *src, Mpool *pool) {
   return str;
 }
 
-void dumb_swap_thread(Token *dest, Mpool *pool) {
-  char *str = mpool_get(pool, dest->size);
-  memcpy(str, dest->string, dest->size);
-  dest->string = str;
-}
-
 /* TOKEN STUFF DONE */
 
 /*MEMPOOL STUFF*/
@@ -123,6 +117,73 @@ void mpool_reset(Mpool *pool) {
   pool->size = 0;
 }
 /*MEMPOOL STUFF DONE*/
+
+/*tEMPOOL STUFF*/
+Tpool *tpool_make_heap(const size_t cap) {
+  Tpool *pool = (Tpool *)malloc(sizeof(Tpool));
+  if (!pool || !cap) {
+    perror("COULD NOT MAKE MEMPOOL ON HEAP");
+    exit(1);
+  }
+  pool->mem = (Token *)malloc(cap * sizeof(Token));
+  if (!pool->mem) {
+    perror("COULD NOT ALLOCATE CHARS FOR MEMPOOL");
+    exit(1);
+  }
+  pool->cap = cap;
+  pool->size = 0;
+  pool->next = NULL;
+  return pool;
+}
+
+Token *tpool_get(Tpool *pool, const size_t size) {
+  if (size > pool->cap) {
+    perror("ASKING FOR TOO MUCH MEM");
+    exit(1);
+  }
+  while (pool->size + size > pool->cap) {
+    if (!pool->next) {
+      pool->next = tpool_make_heap(pool->cap);
+    }
+    pool = pool->next;
+  }
+  Token *tokens = pool->mem + pool->size;
+  pool->size += size;
+  return tokens;
+}
+
+void tpool_free_heap(Tpool *pool) {
+  if (pool) {
+    tpool_free_heap(pool->next);
+    free(pool->mem);
+    free(pool);
+  }
+}
+
+size_t tpool_free_heap_count(Tpool *pool) {
+  if (pool) {
+    size_t count = pool->cap + tpool_free_heap_count(pool->next);
+    free(pool->mem);
+    free(pool);
+    return count;
+  }
+  return 0;
+}
+void tpool_free_stack(Tpool pool) {
+  tpool_free_heap(pool.next);
+  free(pool.mem);
+}
+
+void tpool_reset(Tpool *pool) {
+  size_t new_max = pool->cap + tpool_free_heap_count(pool->next);
+  pool->next = NULL;
+  if (new_max > pool->cap) {
+    pool->cap = new_max;
+    pool->mem = (Token *)realloc(pool->mem, new_max * sizeof(Token));
+  }
+  pool->size = 0;
+}
+/*TEMPOOL STUFF DONE*/
 
 /* WORDS STUFF*/
 /* WORDS STUFF*/
