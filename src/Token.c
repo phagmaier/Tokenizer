@@ -118,14 +118,14 @@ void mpool_reset(Mpool *pool) {
 }
 /*MEMPOOL STUFF DONE*/
 
-/*tEMPOOL STUFF*/
-Tpool *tpool_make_heap(const size_t cap) {
-  Tpool *pool = (Tpool *)malloc(sizeof(Tpool));
+/*PEMPOOL STUFF*/
+Ppool *ppool_make_heap(const size_t cap) {
+  Ppool *pool = (Ppool *)malloc(sizeof(Ppool));
   if (!pool || !cap) {
     perror("COULD NOT MAKE MEMPOOL ON HEAP");
     exit(1);
   }
-  pool->mem = (Token *)malloc(cap * sizeof(Token));
+  pool->mem = (Pair *)malloc(cap * sizeof(Pair));
   if (!pool->mem) {
     perror("COULD NOT ALLOCATE CHARS FOR MEMPOOL");
     exit(1);
@@ -136,50 +136,50 @@ Tpool *tpool_make_heap(const size_t cap) {
   return pool;
 }
 
-Token *tpool_get(Tpool *pool, const size_t size) {
+Pair *ppool_get(Ppool *pool, const size_t size) {
   if (size > pool->cap) {
     perror("ASKING FOR TOO MUCH MEM");
     exit(1);
   }
   while (pool->size + size > pool->cap) {
     if (!pool->next) {
-      pool->next = tpool_make_heap(pool->cap);
+      pool->next = ppool_make_heap(pool->cap);
     }
     pool = pool->next;
   }
-  Token *tokens = pool->mem + pool->size;
+  Pair *pairs = pool->mem + pool->size;
   pool->size += size;
-  return tokens;
+  return pairs;
 }
 
-void tpool_free_heap(Tpool *pool) {
+void ppool_free_heap(Ppool *pool) {
   if (pool) {
-    tpool_free_heap(pool->next);
+    ppool_free_heap(pool->next);
     free(pool->mem);
     free(pool);
   }
 }
 
-size_t tpool_free_heap_count(Tpool *pool) {
+size_t ppool_free_heap_count(Ppool *pool) {
   if (pool) {
-    size_t count = pool->cap + tpool_free_heap_count(pool->next);
+    size_t count = pool->cap + ppool_free_heap_count(pool->next);
     free(pool->mem);
     free(pool);
     return count;
   }
   return 0;
 }
-void tpool_free_stack(Tpool pool) {
-  tpool_free_heap(pool.next);
+void ppool_free_stack(Ppool pool) {
+  ppool_free_heap(pool.next);
   free(pool.mem);
 }
 
-void tpool_reset(Tpool *pool) {
-  size_t new_max = pool->cap + tpool_free_heap_count(pool->next);
+void ppool_reset(Ppool *pool) {
+  size_t new_max = pool->cap + ppool_free_heap_count(pool->next);
   pool->next = NULL;
   if (new_max > pool->cap) {
     pool->cap = new_max;
-    pool->mem = (Token *)realloc(pool->mem, new_max * sizeof(Token));
+    pool->mem = (Pair *)realloc(pool->mem, new_max * sizeof(Pair));
   }
   pool->size = 0;
 }
@@ -200,26 +200,38 @@ ArrToken *arrToken_make_heap(const size_t cap) {
     perror("COULD NOT MAKE ARR ON THE HEAP");
     exit(1);
   }
-  arr->words = (Word *)calloc(cap, sizeof(Word));
-  if (!arr->words) {
+  arr->pairs = (Pairs *)calloc(cap, sizeof(Pairs));
+  if (!arr->pairs) {
     perror("COULD NOT ALLOCATE TOKENS");
     exit(1);
   }
-  arr->size = 0;
   arr->cap = cap;
+  arr->size = 0;
   return arr;
 }
 
 void arrToken_reset(ArrToken *arr) {
   arr->size = 0;
-  memset(arr->words, 0, sizeof(Word) * arr->cap);
+  memset(arr->pairs, 0, sizeof(Pairs) * arr->size);
 }
 void arrToken_free_heap(ArrToken *arr) {
   for (size_t i = 0; i < arr->size; ++i) {
-    free(arr->words[i].tokens);
+    free(arr->pairs[i].pairs);
   }
-  free(arr->words);
+  free(arr->pairs);
   free(arr);
+}
+
+void *arrToken_get_pairs(ArrToken *arr) {
+  if (arr->cap == arr->size) {
+    arr->pairs = realloc(arr->pairs, sizeof(Pairs) * arr->cap * 2);
+    if (!arr->pairs) {
+      perror("COULD NOT RESIZE THE ARRAY");
+      exit(1);
+    }
+    arr->cap *= 2;
+  }
+  return &arr->pairs[arr->size++];
 }
 
 /*ARR TOKEN STUFF DONE*/

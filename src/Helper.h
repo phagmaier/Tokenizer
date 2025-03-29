@@ -20,6 +20,7 @@ typedef struct Indexes {
   Index *arr;
 } Indexes;
 
+// made the pairs so i can constantly clear the temp pairs
 typedef struct ThreadData {
   char *fileName;
   Indexes *indexes;
@@ -27,7 +28,7 @@ typedef struct ThreadData {
   SafeDic *global_dic;
   ArrToken *text;
   Mpool *pool_text;
-  Tpool *pool_tokens;
+  Ppool *pool_pairs;
 } ThreadData;
 
 size_t get_file_size(const char *filename);
