@@ -186,9 +186,9 @@ bool safeDic_insert(SafeDic *dic, Token *token) {
     index = (index + 1) % dic->cap;
   }
 
-  // printf("TOKEN BEFORE INSERTION: %s\n", token->string);
   dic->nodes[index] = cstr_deep_copy(token, dic->pool);
-  // printf("AFTER INSERTION: %s\n", dic->nodes[index]);
+
+  ++(dic->size);
   pthread_mutex_unlock(&dic->lock);
   return true;
 }

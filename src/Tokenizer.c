@@ -27,9 +27,10 @@ void write_tokens(SafeDic *global_dic, const char *fileName) {
 void tokenizer(char *filename, size_t vocab_tokens, size_t bytes_per_thread,
                char *output_fileName, size_t max_num_threads) {
   size_t num_threads = max_num_threads;
+  printf("IN TOKENIZER\n");
   ThreadData *data = create_thread_queue(filename, vocab_tokens,
                                          bytes_per_thread, &num_threads);
-
+  printf("NUM THREADS: %zu\n", num_threads);
   pthread_t *threads = (pthread_t *)malloc(sizeof(pthread_t) * num_threads);
   for (size_t thread = 0; thread < num_threads; ++thread) {
     pthread_create(&threads[thread], NULL, thread_starter, &data[thread]);
