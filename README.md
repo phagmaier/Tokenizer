@@ -101,6 +101,12 @@ runme/
 └── data/           //Directory where input text and output file resides.
 ```
 
+## PERFORMANCE
+
+* The fastest I got it to perform on a average laptop using 15 threads was ~15 seconds for a file containing 167343426 bytes/chars. But this was with a small number of bytes per thread (around 50k) and therefore a smaller context for tokenization. The results were not terrible but for the most accurate results use a larger bytes per thread and for max performance use a smaller amount of bytes per thread.
+
+* For a smaller file (the book infinite jest which is around 3215458 bytes) with only 8 threads and default settings i was able to tokenize the book in around 11 seconds. Again on an average to slightly above average laptop
+
 ## NOTES/PROBLEMS
 
 1. Only accepts ASCII
