@@ -31,7 +31,7 @@ size_t dic_hash(const char *s, const size_t cap);
 Dic *dic_make_heap(size_t cap);
 void dic_resize(Dic *dic);
 void dic_insert(Dic *dic, Token *token);
-void dic_reset_get_max(Dic *dic, Token *token);
+void dic_reset_get_max(Dic *dic, Token *token, Mpool *pool);
 void dic_reset(Dic *dic);
 void dic_free_heap(Dic *dic);
 void dic_free_stack(Dic dic);

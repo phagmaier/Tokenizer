@@ -63,8 +63,8 @@ The tokenizer takes the following arguments:
 
 * -i: Input file path (default: ../data/data.txt).
 * -o: Output file path (default: ../data/myTokens.txt).
-* -v: Vocabulary size (default: 20000).
-* -b: Bytes per thread (default: 500000).  
+* -v: Vocabulary size (default: 10000).
+* -b: Bytes per thread (default: 250000).  
 * -t: Maximum number of threads (default: 8).
 * The output format is: `<token_id>, <token_string>\n`.
 

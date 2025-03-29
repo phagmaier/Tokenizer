@@ -87,11 +87,11 @@ void dic_insert(Dic *dic, Token *token) {
   }
 }
 
-void dic_reset_get_max(Dic *dic, Token *token) {
-  // token->string = mpool_get(pool, dic->max_token.size);
-  // memcpy(token->string, dic->max_token.string, dic->max_token.size);
-  // token->size = dic->max_token.size;
-  *token = dic->max_token;
+void dic_reset_get_max(Dic *dic, Token *token, Mpool *pool) {
+  token->string = mpool_get(pool, dic->max_token.size);
+  memcpy(token->string, dic->max_token.string, dic->max_token.size);
+  token->size = dic->max_token.size;
+  //*token = dic->max_token;
   memset(dic->nodes, 0, sizeof(DicNode) * dic->cap);
   dic->size = 0;
   dic->max_count = 0;

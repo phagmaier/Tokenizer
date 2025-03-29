@@ -61,13 +61,13 @@ void *thread_starter(void *args) {
     tokenizer_read_file(data->fileName, text, pool_text, pool_tokens, dic,
                         start, size);
 
-    dic_reset_get_max(dic, &max_token);
-    vocab_count = safeDic_insert(global, &max_token);
+    dic_reset_get_max(dic, &max_token, pool_text);
+    vocab_count = safeDic_insert(global, max_ptr);
     while (vocab_count < vocab_goal) {
       // printf("VOCAB_COUNT/vocab_goal %zu/%zu\n", vocab_count, vocab_goal);
       tokenizer_find_max(text, pool_text, dic, max_ptr);
-      dic_reset_get_max(dic, max_ptr);
-      vocab_count += safeDic_insert(global, &max_token);
+      dic_reset_get_max(dic, max_ptr, pool_text);
+      vocab_count += safeDic_insert(global, max_ptr);
     }
     // printf("DONE WITH AN ITERATION\n");
     vocab_count = 0;

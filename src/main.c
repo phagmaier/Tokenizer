@@ -5,12 +5,12 @@
 #include <unistd.h> // For getopt
 
 // Default parameters
-#define DEFAULT_INPUT_FILE "../data/data.txt"
-// #define DEFAULT_INPUT_FILE "../data/infinitejest.txt"
+// #define DEFAULT_INPUT_FILE "../data/data.txt"
+#define DEFAULT_INPUT_FILE "../data/infinitejest.txt"
 #define DEFAULT_OUTPUT_FILE "../data/myTokens.txt"
-#define DEFAULT_VOCAB_SIZE 50000
 // #define DEFAULT_VOCAB_SIZE 50000
-#define DEFAULT_BYTES_PER_THREAD 500000
+#define DEFAULT_VOCAB_SIZE 10000
+#define DEFAULT_BYTES_PER_THREAD 250000
 #define DEFAULT_MAX_NUM_THREADS 8
 
 int main(int argc, char *argv[]) {
