@@ -8,6 +8,7 @@ const char TOKENIZER_DELIMITERS[] =
     " \t\n\r\f\v.,;:!?()[]{}<>/\\|`~@#$%^&*-+=\'\"";
 
 void write_tokens(SafeDic *global_dic, const char *fileName) {
+  printf("GLOBAL DIC SIZE: %zu\n", global_dic->size);
   FILE *fptr;
 
   fptr = fopen(fileName, "w");
@@ -16,8 +17,7 @@ void write_tokens(SafeDic *global_dic, const char *fileName) {
   size_t token_symbol = 1;
   for (size_t i = 0; i < size; ++i) {
     if (arr[i]) {
-      // printf("%s\n", arr[i]);
-      fprintf(fptr, "%zu, %s\n", token_symbol, arr[i]);
+      fprintf(fptr, "%zu,%s\n", token_symbol, arr[i]);
       ++token_symbol;
     }
   }
@@ -31,7 +31,6 @@ void tokenizer(char *filename, size_t vocab_tokens, size_t bytes_per_thread,
                                          bytes_per_thread, &num_threads);
 
   pthread_t *threads = (pthread_t *)malloc(sizeof(pthread_t) * num_threads);
-  printf("NUMBER OF THREADS: %zu\n", num_threads);
   for (size_t thread = 0; thread < num_threads; ++thread) {
     pthread_create(&threads[thread], NULL, thread_starter, &data[thread]);
   }
@@ -58,18 +57,18 @@ void *thread_starter(void *args) {
   Token max_token;
   Token *max_ptr = &max_token;
   while (get_index(&start, &size, &vocab_goal, data->indexes)) {
-    printf("READING FILE\n");
     tokenizer_read_file(data->fileName, text, pool_text, pool_tokens, dic,
                         start, size);
-    printf("FILE READ FILE\n");
+
     dic_reset_get_max(dic, &max_token);
     vocab_count = safeDic_insert(global, &max_token);
     while (vocab_count < vocab_goal) {
+      // printf("VOCAB_COUNT/vocab_goal %zu/%zu\n", vocab_count, vocab_goal);
       tokenizer_find_max(text, pool_text, dic, max_ptr);
       dic_reset_get_max(dic, max_ptr);
-      arrToken_reset(text);
       vocab_count += safeDic_insert(global, &max_token);
     }
+    // printf("DONE WITH AN ITERATION\n");
     vocab_count = 0;
     arrToken_reset(text);
     ppool_reset(pool_tokens);
@@ -139,19 +138,19 @@ void tokenizer_find_max(ArrToken *text, Mpool *p_text, Dic *dic, Token *max) {
 void make_word(const char *buffer, size_t start, size_t end, Pairs *arr,
                Mpool *p_text, Ppool *p_pairs, Dic *dic) {
 
-  // technically supposed to be +1 but we want it to be off by 1 for pairs
   size_t size = (end - start);
-  arr->size = size;
-  if (size + 1 == 1) {
+  if (size == 0) {
+    // One character word
     arr->pairs = ppool_get(p_pairs, 1);
     token_deep_copy_char(&arr->pairs[0].full, buffer[start], p_text);
     dic_insert(dic, &arr->pairs[0].full);
     arr->size = 1;
     return;
   }
+
   Pair *pairs = ppool_get(p_pairs, size);
   arr->size = size;
-  for (unsigned int i = 0; i < size - 1; ++i) {
+  for (unsigned int i = 0; i < size; ++i) {
     token_deep_copy_char(&pairs[i].left, buffer[i + start], p_text);
     token_deep_copy_char(&pairs[i].right, buffer[i + 1 + start], p_text);
     token_merge_deep(&pairs[i].full, &pairs[i].left, &pairs[i].right, p_text);
@@ -173,7 +172,6 @@ void tokenizer_read_file(const char *fileName, ArrToken *text, Mpool *p_text,
   char *buffer = (char *)malloc(size);
   size_t bytesRead = fread(buffer, 1, size, file);
   fclose(file);
-
   size_t i = 0;
   size_t word_start = 0;
   // size_t word_count = 0;
@@ -196,7 +194,6 @@ void tokenizer_read_file(const char *fileName, ArrToken *text, Mpool *p_text,
               p_pairs, dic);
   }
   free(buffer);
-  printf("DONE?\n");
 }
 
 // false means couldn't get index

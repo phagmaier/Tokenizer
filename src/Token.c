@@ -223,7 +223,8 @@ void arrToken_free_heap(ArrToken *arr) {
 }
 
 void *arrToken_get_pairs(ArrToken *arr) {
-  if (arr->cap == arr->size) {
+  if (arr->size == arr->cap) {
+    printf("\n\n\nRESIZING\n");
     arr->pairs = realloc(arr->pairs, sizeof(Pairs) * arr->cap * 2);
     if (!arr->pairs) {
       perror("COULD NOT RESIZE THE ARRAY");

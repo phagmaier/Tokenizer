@@ -7,7 +7,7 @@
 // Default parameters
 #define DEFAULT_INPUT_FILE "../data/data.txt"
 #define DEFAULT_OUTPUT_FILE "../data/myTokens.txt"
-#define DEFAULT_VOCAB_SIZE 20000
+#define DEFAULT_VOCAB_SIZE 2000
 // #define DEFAULT_VOCAB_SIZE 50000
 #define DEFAULT_BYTES_PER_THREAD 500000
 #define DEFAULT_MAX_NUM_THREADS 8
