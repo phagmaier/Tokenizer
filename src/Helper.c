@@ -99,7 +99,7 @@ ThreadData *create_thread_queue(char *filename, size_t vocab_tokens,
     exit(1);
   }
 
-  SafeDic *global = safeDic_make_heap(vocab_tokens * 2);
+  SafeDic *global = safeDic_make_heap(vocab_tokens * 3);
 
   for (size_t i = 0; i < num_threads; ++i) {
     list[i].fileName = filename;

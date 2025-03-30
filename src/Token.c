@@ -69,6 +69,23 @@ Mpool *mpool_make_heap(const size_t cap) {
   return pool;
 }
 
+Mpool mpool_make_stack(const size_t cap) {
+  Mpool pool;
+  if (!cap) {
+    perror("MUST GIVE MEMPOOL A SIZE >0");
+    exit(1);
+  }
+  pool.mem = (char *)malloc(cap);
+  if (!pool.mem) {
+    perror("COULD NOT ALLOCATE CHARS FOR MEMPOOL");
+    exit(1);
+  }
+  pool.cap = cap;
+  pool.size = 0;
+  pool.next = NULL;
+  return pool;
+}
+
 char *mpool_get(Mpool *pool, const size_t size) {
   if (size > pool->cap) {
     perror("ASKING FOR TOO MUCH MEM");
@@ -102,9 +119,9 @@ size_t mpool_free_heap_count(Mpool *pool) {
   }
   return 0;
 }
-void mpool_free_stack(Mpool pool) {
-  mpool_free_heap(pool.next);
-  free(pool.mem);
+void mpool_free_stack(Mpool *pool) {
+  mpool_free_heap(pool->next);
+  free(pool->mem);
 }
 
 void mpool_reset(Mpool *pool) {
@@ -133,6 +150,23 @@ Ppool *ppool_make_heap(const size_t cap) {
   pool->cap = cap;
   pool->size = 0;
   pool->next = NULL;
+  return pool;
+}
+
+Ppool ppool_make_stack(const size_t cap) {
+  Ppool pool;
+  if (!cap) {
+    perror("NEED TO GIVE PPool a size");
+    exit(1);
+  }
+  pool.mem = (Pair *)malloc(cap * sizeof(Pair));
+  if (!pool.mem) {
+    perror("COULD NOT ALLOCATE CHARS FOR MEMPOOL");
+    exit(1);
+  }
+  pool.cap = cap;
+  pool.size = 0;
+  pool.next = NULL;
   return pool;
 }
 
@@ -169,9 +203,9 @@ size_t ppool_free_heap_count(Ppool *pool) {
   }
   return 0;
 }
-void ppool_free_stack(Ppool pool) {
-  ppool_free_heap(pool.next);
-  free(pool.mem);
+void ppool_free_stack(Ppool *pool) {
+  ppool_free_heap(pool->next);
+  free(pool->mem);
 }
 
 void ppool_reset(Ppool *pool) {
@@ -210,6 +244,23 @@ ArrToken *arrToken_make_heap(const size_t cap) {
   return arr;
 }
 
+ArrToken arrToken_make_stack(const size_t cap) {
+  if (!cap) {
+    perror("ARR SIZE and MUST BE AT LEAST 1");
+    exit(1);
+  }
+
+  ArrToken arr;
+  arr.pairs = (Pairs *)calloc(cap, sizeof(Pairs));
+  if (!arr.pairs) {
+    perror("COULD NOT ALLOCATE TOKENS");
+    exit(1);
+  }
+  arr.cap = cap;
+  arr.size = 0;
+  return arr;
+}
+
 void arrToken_reset(ArrToken *arr) {
   arr->size = 0;
   memset(arr->pairs, 0, sizeof(Pairs) * arr->size);
@@ -220,6 +271,13 @@ void arrToken_free_heap(ArrToken *arr) {
   }
   free(arr->pairs);
   free(arr);
+}
+
+void arrToken_free_stack(ArrToken *arr) {
+  for (size_t i = 0; i < arr->size; ++i) {
+    free(arr->pairs[i].pairs);
+  }
+  free(arr->pairs);
 }
 
 void *arrToken_get_pairs(ArrToken *arr) {

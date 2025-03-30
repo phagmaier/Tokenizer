@@ -24,6 +24,18 @@ typedef struct SafeDic {
   Mpool *pool;
 } SafeDic;
 
+typedef struct VNode {
+  Token token;
+  int val;
+} VNode;
+
+typedef struct DicVocab {
+  size_t cap;
+  size_t size;
+  VNode *nodes;
+  Mpool pool;
+} DicVocab;
+
 // UTILITY
 size_t dic_hash(const char *s, const size_t cap);
 
@@ -41,3 +53,11 @@ SafeDic *safeDic_make_heap(size_t cap);
 void safeDic_resize(SafeDic *dic);
 bool safeDic_insert(SafeDic *dic, Token *token);
 void safeDic_free_heap(SafeDic *dic);
+void safeDic_insert_char(SafeDic *dic, char c);
+
+DicVocab dicVocab_make_stack(size_t cap);
+bool dicVocab_check(DicVocab *dic, Token *token);
+// really this should never be called
+void dicVocab_resize(DicVocab *dic);
+void dicVocab_insert(DicVocab *dic, Token *string, int val);
+void dicVocab_free_stack(DicVocab *dic);

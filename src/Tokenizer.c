@@ -1,8 +1,4 @@
 #include "Tokenizer.h"
-#include "Dics.h"
-#include "Token.h"
-#include <string.h>
-#define DELIMITERS_SIZE
 
 const char TOKENIZER_DELIMITERS[] =
     " \t\n\r\f\v.,;:!?()[]{}<>/\\|`~@#$%^&*-+=\'\"";
@@ -30,6 +26,10 @@ void tokenizer(char *filename, size_t vocab_tokens, size_t bytes_per_thread,
   printf("IN TOKENIZER\n");
   ThreadData *data = create_thread_queue(filename, vocab_tokens,
                                          bytes_per_thread, &num_threads);
+  printf("NUM THREADS %zu\n", num_threads);
+  for (size_t i = 0; i < DELIMITERS_SIZE; ++i) {
+    safeDic_insert_char(data[0].global_dic, TOKENIZER_DELIMITERS[i]);
+  }
   printf("NUM THREADS: %zu\n", num_threads);
   pthread_t *threads = (pthread_t *)malloc(sizeof(pthread_t) * num_threads);
   for (size_t thread = 0; thread < num_threads; ++thread) {
@@ -158,7 +158,6 @@ void make_word(const char *buffer, size_t start, size_t end, Pairs *arr,
     dic_insert(dic, &pairs[i].full);
   }
   arr->pairs = pairs;
-  // token pairs is temporary so we don't worry about it
 }
 
 void tokenizer_read_file(const char *fileName, ArrToken *text, Mpool *p_text,
@@ -172,6 +171,7 @@ void tokenizer_read_file(const char *fileName, ArrToken *text, Mpool *p_text,
   fseek(file, start, SEEK_SET);
   char *buffer = (char *)malloc(size);
   size_t bytesRead = fread(buffer, 1, size, file);
+  // printf("bytesRead: %zu\n", bytesRead);
   fclose(file);
   size_t i = 0;
   size_t word_start = 0;

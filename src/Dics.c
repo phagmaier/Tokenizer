@@ -1,4 +1,5 @@
 #include "Dics.h"
+
 /*UTILITY FUNCTION STUFF*/
 size_t dic_hash(const char *s, const size_t cap) {
   size_t hash = 0;
@@ -193,6 +194,30 @@ bool safeDic_insert(SafeDic *dic, Token *token) {
   return true;
 }
 
+void safeDic_insert_char(SafeDic *dic, char c) {
+  // pthread_mutex_lock(&dic->lock);
+  if (dic->size * 2 >= dic->cap) {
+    safeDic_resize(dic);
+  }
+  char *tmp = mpool_get(dic->pool, 2);
+  tmp[0] = c;
+  tmp[1] = 0;
+  size_t index = dic_hash(tmp, dic->cap);
+  while (dic->nodes[index]) {
+    if (!strcmp(dic->nodes[index], tmp)) {
+      perror("ALL DELIMETERS SHOULD BE UNIQUE ERROR");
+      exit(1);
+      // pthread_mutex_unlock(&dic->lock);
+    }
+    index = (index + 1) % dic->cap;
+  }
+
+  dic->nodes[index] = tmp;
+
+  ++(dic->size);
+  // pthread_mutex_unlock(&dic->lock);
+}
+
 void safeDic_free_heap(SafeDic *dic) {
   pthread_mutex_destroy((&dic->lock));
   free(dic->nodes);
@@ -201,3 +226,83 @@ void safeDic_free_heap(SafeDic *dic) {
 }
 
 /*END OF SAFE DIC STUFF*/
+
+/*START DICVOCAB*/
+
+DicVocab dicVocab_make_stack(size_t cap) {
+  if (!cap) {
+    perror("Vocab DICTIONARY MUST HAVE A SIZE GREATER THAN 0");
+    exit(1);
+  }
+  DicVocab dic;
+  dic.cap = cap;
+  dic.size = 0;
+  dic.nodes = (VNode *)calloc(cap, sizeof(VNode));
+  if (!dic.nodes) {
+    perror("COULD NOT ALLOCATE SAFE DIC TOKENS ON THE HEAP");
+    exit(1);
+  }
+  dic.pool = mpool_make_stack(cap * 4);
+  return dic;
+}
+bool dicVocab_check(DicVocab *dic, Token *token) {
+  size_t index = dic_hash(token->string, dic->cap);
+  while (dic->nodes[index].token.string) {
+    if (!strcmp(dic->nodes[index].token.string, token->string)) {
+      return true;
+    }
+    index = (index + 1) % dic->cap;
+  }
+  return false;
+}
+
+void DicVocab_free_stack(DicVocab *dic) {
+  mpool_free_stack(&dic->pool);
+  free(dic->nodes);
+}
+
+void dicVocab_resize(DicVocab *dic) {
+  printf("DIC VOCAB SHOULD ALWAYS BE GIVEN ENOUGH SIZE BUT RESIZING ANYWAY\n");
+  const size_t old_cap = dic->cap;
+  const size_t new_cap = dic->cap * 2;
+  dic->cap = new_cap;
+  VNode *old_nodes = dic->nodes;
+  VNode *new_nodes = (VNode *)calloc(new_cap, sizeof(VNode));
+  if (!new_nodes) {
+    perror("COULD NOT RESIZE NEW NODES");
+    exit(1);
+  }
+  for (size_t i = 0; i < old_cap; ++i) {
+    if (old_nodes[i].token.string) {
+      size_t index = dic_hash(old_nodes[i].token.string, new_cap);
+      while (new_nodes[index].token.string) {
+        index = (index + 1) % new_cap;
+      }
+      new_nodes[index] = old_nodes[i];
+    }
+  }
+  free(old_nodes);
+  dic->nodes = new_nodes;
+}
+
+void dicVocab_insert(DicVocab *dic, Token *string, int value) {
+  // printf("INSERTING STRING: %s\n", string->string);
+  if (dic->size * 2 >= dic->cap) {
+    dicVocab_resize(dic);
+  }
+  size_t index = dic_hash(string->string, dic->cap);
+  while (dic->nodes[index].token.string) {
+    if (!strcmp(dic->nodes[index].token.string, string->string)) {
+      printf(
+          "SHOULD NEVER INSERT SAME ELEMENT TWICE IN DICVOCAB BUT YOU DID\n");
+      return;
+    }
+    index = (index + 1) % dic->cap;
+  }
+
+  token_deep_copy(&dic->nodes[index].token, string, &dic->pool);
+  dic->nodes[index].val = value;
+  ++(dic->size);
+}
+
+/*START DICVOCAB*/

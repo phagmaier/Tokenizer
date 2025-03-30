@@ -2,6 +2,7 @@
 #include "Dics.h"
 #include "Helper.h"
 #include "Token.h"
+#define DELIMITERS_SIZE 37
 
 void tokenizer(char *filename, size_t vocab_tokens, size_t bytes_per_thread,
                char *output_fileName, size_t max_num_threads);

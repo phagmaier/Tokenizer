@@ -52,26 +52,30 @@ char *cstr_deep_copy(const Token *src, Mpool *pool);
 
 /*MEMPOOL STUFF */
 Mpool *mpool_make_heap(const size_t cap);
+Mpool mpool_make_stack(const size_t cap);
 char *mpool_get(Mpool *pool, const size_t size);
 void mpool_reset(Mpool *pool);
-void mpool_free_stack(Mpool pool);
+void mpool_free_stack(Mpool *pool);
 void mpool_free_heap(Mpool *pool);
 size_t mpool_free_heap_count(Mpool *pool);
 /*MEMPOOL STUFF DONE */
 
 /*Ppool STUFF */
 Ppool *ppool_make_heap(const size_t cap);
+Ppool ppool_make_stack(const size_t cap);
 Pair *ppool_get(Ppool *pool, const size_t size);
 void ppool_reset(Ppool *pool);
-void ppool_free_stack(Ppool pool);
+void ppool_free_stack(Ppool *pool);
 void ppool_free_heap(Ppool *pool);
 size_t ppool_free_heap_count(Ppool *pool);
 /*Ppool STUFF DONE */
 
 /*ARR STUFF*/
 ArrToken *arrToken_make_heap(const size_t cap);
+ArrToken arrToken_make_stack(const size_t cap);
 void arrToken_append_char(ArrToken *arr, const char c, Mpool *pool);
 void arrToken_reset(ArrToken *arr);
 void arrToken_free_heap(ArrToken *arr);
+void arrToken_free_stack(ArrToken *arr);
 void *arrToken_get_pairs(ArrToken *arr);
 /*ARR STUFF DONE*/
