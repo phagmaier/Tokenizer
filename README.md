@@ -1,9 +1,11 @@
-[![License](https://img.shields.io/github/license/phagmaier/Tokenizer)](./LICENSE)
+# 🔡 Tokenizer
+
+[![License](https://img.shields.io/github/license/phagmaier/Tokenizer)](LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/phagmaier/Tokenizer?style=social)](https://github.com/phagmaier/Tokenizer/stargazers)
 [![Last Commit](https://img.shields.io/github/last-commit/phagmaier/Tokenizer)](https://github.com/phagmaier/Tokenizer/commits/main)
-[![Lines of Code](https://img.shields.io/github/languages/code-size/phagmaier/Tokenizer)](https://github.com/phagmaier/Tokenizer)
-
-# 🔡 Tokenizer
+[![Lines of Code](https://img.shields.io/tokei/lines/github/phagmaier/Tokenizer)](https://github.com/phagmaier/Tokenizer)
+[![Language](https://img.shields.io/badge/language-C-blue.svg)](https://en.wikipedia.org/wiki/C_(programming_language))
+[![Repo Size](https://img.shields.io/github/repo-size/phagmaier/Tokenizer)](https://github.com/phagmaier/Tokenizer)
 
 A high-performance tokenizer written in C, built for **blazing-fast** text processing. It uses **multithreading** and a **custom memory pool** to tokenize large files with minimal overhead. Tokenization is performed using the **Byte Pair Encoding (BPE)** algorithm.
 
