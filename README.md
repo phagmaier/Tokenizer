@@ -1,6 +1,5 @@
 # 🔡 Tokenizer
 
-[![License](https://img.shields.io/github/license/phagmaier/Tokenizer)](LICENSE.md)
 [![Language](https://img.shields.io/badge/language-C-blue.svg)](https://en.wikipedia.org/wiki/C_(programming_language))
 
 A high-performance tokenizer written in C, built for **blazing-fast** text processing. It uses **multithreading** and a **custom memory pool** to tokenize large files with minimal overhead. Tokenization is performed using the **Byte Pair Encoding (BPE)** algorithm.
@@ -154,6 +153,4 @@ No formal contributing guide yet — but PRs are welcome!
 
 **Parker Hagmaier**  
 📧 [parkerhagmaier@gmail.com](mailto:parkerhagmaier@gmail.com)
-
-```
-
+---
