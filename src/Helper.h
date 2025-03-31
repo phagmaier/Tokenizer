@@ -26,9 +26,8 @@ typedef struct ThreadData {
   Indexes *indexes;
   Dic *local_dic;
   SafeDic *global_dic;
-  ArrToken *text;
+  Pairs *pairs;
   Mpool *pool_text;
-  Ppool *pool_pairs;
 } ThreadData;
 
 size_t get_file_size(const char *filename);

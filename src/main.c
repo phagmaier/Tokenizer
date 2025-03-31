@@ -1,5 +1,4 @@
-#include "Dics.h"
-// #include "TextToken.h"
+#include "TextToken.h"
 #include "Tokenizer.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,7 +11,7 @@
 #define DEFAULT_OUTPUT_FILE "../data/myTokens.txt"
 #define DEFAULT_VOCAB_SIZE 10000
 // #define DEFAULT_VOCAB_SIZE 50000
-#define DEFAULT_BYTES_PER_THREAD 500000
+#define DEFAULT_BYTES_PER_THREAD 250000
 #define DEFAULT_MAX_NUM_THREADS 15
 
 int main(int argc, char *argv[]) {
@@ -65,14 +64,8 @@ int main(int argc, char *argv[]) {
   printf("Execution time for %zu tokens: %d hours, %d minutes, %d seconds\n",
          vocab_size, hours, minutes, seconds);
 
-  /*
-   * SHOULD NOT HAVE TO MAKE DIC LIKE YOU DO BELOW HERE USER SHOULD JUST
-   * BE ABLE
-   * TO CALL A FUNC
-   * FUNCTION AND YOU JUST RUN IT HERE
-   */
-
   // DicVocab dic = dicVocab_make_stack(DEFAULT_VOCAB_SIZE);
   // read_vocab(&dic, DEFAULT_OUTPUT_FILE);
+  tokenize_file("../data/test.txt", DEFAULT_OUTPUT_FILE, DEFAULT_VOCAB_SIZE);
   return 0;
 }

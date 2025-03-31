@@ -12,13 +12,12 @@ bool get_index(size_t *start, size_t *size, size_t *vocab_goal,
                Indexes *indexes);
 void write_tokens(SafeDic *global_dic, const char *filename);
 
-void tokenizer_read_file(const char *fileName, ArrToken *text, Mpool *pool_text,
-                         Ppool *pool_pairs, Dic *dic, size_t start,
-                         size_t size);
+void tokenizer_read_file(const char *fileName, Pairs *text, Mpool *pool_text,
+                         Dic *dic, size_t start, size_t size);
 
-void tokenizer_find_max(ArrToken *text, Mpool *pool_text, Dic *dic, Token *max);
+void tokenizer_find_max(Pairs *text, Mpool *pool_text, Dic *dic, Token *max);
 
 void make_word(const char *buffer, size_t start, size_t end, Pairs *arr,
-               Mpool *p_text, Ppool *p_pairs, Dic *dic);
+               Mpool *p_text, Dic *dic);
 
 void merge_max(Pairs *arr, Mpool *p_text, Dic *dic, Token *max);

@@ -106,9 +106,8 @@ ThreadData *create_thread_queue(char *filename, size_t vocab_tokens,
     list[i].indexes = indexes;
     list[i].local_dic = dic_make_heap(max_tokens / 3);
     list[i].global_dic = global;
-    list[i].text = arrToken_make_heap(max_tokens);
-    list[i].pool_text = mpool_make_heap(max_tokens * 3);
-    list[i].pool_pairs = ppool_make_heap(max_tokens * 2);
+    list[i].pairs = pairs_make_heap(max_tokens + 10);
+    list[i].pool_text = mpool_make_heap(max_tokens * 5);
   }
 
   return list;
@@ -117,9 +116,8 @@ ThreadData *create_thread_queue(char *filename, size_t vocab_tokens,
 void threadDataList_free(ThreadData *data, size_t num_threads) {
   for (size_t i = 0; i < num_threads; ++i) {
     dic_free_heap(data[i].local_dic);
-    arrToken_free_heap(data[i].text);
+    pairs_free_heap(data[i].pairs);
     mpool_free_heap(data[i].pool_text);
-    ppool_free_heap(data[i].pool_pairs);
   }
   safeDic_free_heap(data[0].global_dic);
   free(data[0].indexes->arr);

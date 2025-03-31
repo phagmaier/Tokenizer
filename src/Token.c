@@ -133,164 +133,51 @@ void mpool_reset(Mpool *pool) {
   }
   pool->size = 0;
 }
-/*MEMPOOL STUFF DONE*/
 
-/*PEMPOOL STUFF*/
-Ppool *ppool_make_heap(const size_t cap) {
-  Ppool *pool = (Ppool *)malloc(sizeof(Ppool));
-  if (!pool || !cap) {
-    perror("COULD NOT MAKE MEMPOOL ON HEAP");
+Pairs pairs_make_stack(size_t cap) {
+  Pairs pairs;
+  pairs.pairs = (Pair *)calloc(cap, sizeof(Pair));
+  if (!pairs.pairs) {
+    perror("COULD NOT MAKE PAIR ARR FOR PAIRS");
     exit(1);
   }
-  pool->mem = (Pair *)malloc(cap * sizeof(Pair));
-  if (!pool->mem) {
-    perror("COULD NOT ALLOCATE CHARS FOR MEMPOOL");
-    exit(1);
-  }
-  pool->cap = cap;
-  pool->size = 0;
-  pool->next = NULL;
-  return pool;
-}
-
-Ppool ppool_make_stack(const size_t cap) {
-  Ppool pool;
-  if (!cap) {
-    perror("NEED TO GIVE PPool a size");
-    exit(1);
-  }
-  pool.mem = (Pair *)malloc(cap * sizeof(Pair));
-  if (!pool.mem) {
-    perror("COULD NOT ALLOCATE CHARS FOR MEMPOOL");
-    exit(1);
-  }
-  pool.cap = cap;
-  pool.size = 0;
-  pool.next = NULL;
-  return pool;
-}
-
-Pair *ppool_get(Ppool *pool, const size_t size) {
-  if (size > pool->cap) {
-    perror("ASKING FOR TOO MUCH MEM");
-    exit(1);
-  }
-  while (pool->size + size > pool->cap) {
-    if (!pool->next) {
-      pool->next = ppool_make_heap(pool->cap);
-    }
-    pool = pool->next;
-  }
-  Pair *pairs = pool->mem + pool->size;
-  pool->size += size;
+  pairs.cap = cap;
+  pairs.size = 0;
   return pairs;
 }
-
-void ppool_free_heap(Ppool *pool) {
-  if (pool) {
-    ppool_free_heap(pool->next);
-    free(pool->mem);
-    free(pool);
-  }
-}
-
-size_t ppool_free_heap_count(Ppool *pool) {
-  if (pool) {
-    size_t count = pool->cap + ppool_free_heap_count(pool->next);
-    free(pool->mem);
-    free(pool);
-    return count;
-  }
-  return 0;
-}
-void ppool_free_stack(Ppool *pool) {
-  ppool_free_heap(pool->next);
-  free(pool->mem);
-}
-
-void ppool_reset(Ppool *pool) {
-  size_t new_max = pool->cap + ppool_free_heap_count(pool->next);
-  pool->next = NULL;
-  if (new_max > pool->cap) {
-    pool->cap = new_max;
-    pool->mem = (Pair *)realloc(pool->mem, new_max * sizeof(Pair));
-  }
-  pool->size = 0;
-}
-/*TEMPOOL STUFF DONE*/
-
-/* WORDS STUFF*/
-/* WORDS STUFF*/
-
-/*ARR TOKEN STUFF*/
-ArrToken *arrToken_make_heap(const size_t cap) {
-  if (!cap) {
-    perror("ARR SIZE and MUST BE AT LEAST 1");
+Pairs *pairs_make_heap(size_t cap) {
+  Pairs *pairs = (Pairs *)malloc(sizeof(Pairs));
+  pairs->pairs = (Pair *)calloc(cap, sizeof(Pair));
+  if (!pairs->pairs) {
+    perror("COULD NOT MAKE PAIR ARR FOR PAIRS");
     exit(1);
   }
+  pairs->cap = cap;
+  pairs->size = 0;
+  return pairs;
+}
+void pairs_free_stack(Pairs *pairs) { free(pairs->pairs); }
 
-  ArrToken *arr = (ArrToken *)malloc(sizeof(ArrToken));
-  if (!arr) {
-    perror("COULD NOT MAKE ARR ON THE HEAP");
-    exit(1);
-  }
-  arr->pairs = (Pairs *)calloc(cap, sizeof(Pairs));
-  if (!arr->pairs) {
-    perror("COULD NOT ALLOCATE TOKENS");
-    exit(1);
-  }
-  arr->cap = cap;
-  arr->size = 0;
-  return arr;
+void pairs_free_heap(Pairs *pairs) {
+  free(pairs->pairs);
+  free(pairs);
 }
 
-ArrToken arrToken_make_stack(const size_t cap) {
-  if (!cap) {
-    perror("ARR SIZE and MUST BE AT LEAST 1");
-    exit(1);
-  }
+void pairs_reset(Pairs *pairs) { pairs->size = 0; }
 
-  ArrToken arr;
-  arr.pairs = (Pairs *)calloc(cap, sizeof(Pairs));
-  if (!arr.pairs) {
-    perror("COULD NOT ALLOCATE TOKENS");
-    exit(1);
-  }
-  arr.cap = cap;
-  arr.size = 0;
-  return arr;
-}
-
-void arrToken_reset(ArrToken *arr) {
-  arr->size = 0;
-  memset(arr->pairs, 0, sizeof(Pairs) * arr->size);
-}
-void arrToken_free_heap(ArrToken *arr) {
-  for (size_t i = 0; i < arr->size; ++i) {
-    free(arr->pairs[i].pairs);
-  }
-  free(arr->pairs);
-  free(arr);
-}
-
-void arrToken_free_stack(ArrToken *arr) {
-  for (size_t i = 0; i < arr->size; ++i) {
-    free(arr->pairs[i].pairs);
-  }
-  free(arr->pairs);
-}
-
-void *arrToken_get_pairs(ArrToken *arr) {
-  if (arr->size == arr->cap) {
-    printf("\n\n\nRESIZING\n");
-    arr->pairs = realloc(arr->pairs, sizeof(Pairs) * arr->cap * 2);
-    if (!arr->pairs) {
-      perror("COULD NOT RESIZE THE ARRAY");
+void pairs_insert_chars(Pairs *pairs, const char l, const char r, Mpool *pool) {
+  if (pairs->size == pairs->cap) {
+    pairs->cap *= 2;
+    pairs->pairs = (Pair *)realloc(pairs->pairs, pairs->cap);
+    if (!pairs->pairs) {
+      perror("FAILED TO REALLOC PAIRS ARRAY");
       exit(1);
     }
-    arr->cap *= 2;
   }
-  return &arr->pairs[arr->size++];
+  token_deep_copy_char(&pairs->pairs[pairs->size].left, l, pool);
+  token_deep_copy_char(&pairs->pairs[pairs->size].right, r, pool);
+  token_deep_copy_chars(&pairs->pairs[pairs->size].full, l, r, pool);
+  ++(pairs->size);
 }
 
-/*ARR TOKEN STUFF DONE*/
+/*MEMPOOL STUFF DONE*/

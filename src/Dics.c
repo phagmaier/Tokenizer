@@ -1,4 +1,5 @@
 #include "Dics.h"
+#include <stdio.h>
 
 /*UTILITY FUNCTION STUFF*/
 size_t dic_hash(const char *s, const size_t cap) {
@@ -65,6 +66,10 @@ void dic_resize(Dic *dic) {
 }
 
 void dic_insert(Dic *dic, Token *token) {
+  if (!token->string) {
+    perror("INSERTING A NULL");
+    exit(1);
+  }
   if (dic->size * 2 >= dic->cap) {
     dic_resize(dic);
   }
@@ -174,6 +179,10 @@ void safeDic_resize(SafeDic *dic) {
 
 // need to use the Tokens pool to
 bool safeDic_insert(SafeDic *dic, Token *token) {
+  if (!token->string) {
+    perror("TRYING TO INSERT NULL STRING INTO SAFE DIC");
+    exit(1);
+  }
   pthread_mutex_lock(&dic->lock);
   if (dic->size * 2 >= dic->cap) {
     safeDic_resize(dic);
@@ -286,7 +295,10 @@ void dicVocab_resize(DicVocab *dic) {
 }
 
 void dicVocab_insert(DicVocab *dic, Token *string, int value) {
-  // printf("INSERTING STRING: %s\n", string->string);
+  if (!string->string) {
+    perror("TRYING TO INSERT NULL INTO VOCAB DIC");
+    exit(1);
+  }
   if (dic->size * 2 >= dic->cap) {
     dicVocab_resize(dic);
   }
@@ -295,6 +307,7 @@ void dicVocab_insert(DicVocab *dic, Token *string, int value) {
     if (!strcmp(dic->nodes[index].token.string, string->string)) {
       printf(
           "SHOULD NEVER INSERT SAME ELEMENT TWICE IN DICVOCAB BUT YOU DID\n");
+      printf("%s INSERTED MULTIPLE TIMES \n", string->string);
       return;
     }
     index = (index + 1) % dic->cap;

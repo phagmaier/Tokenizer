@@ -3,14 +3,22 @@
 #include "Token.h"
 #include <stdio.h>
 #include <unistd.h>
-void read_vocab(DicVocab *dic, const char *file);
-void tokenize_file(const char *file_name, DicVocab *dic);
-void tokenize_make_words(const char *buffer, size_t start, size_t end,
-                         Pairs *arr, Mpool *p_text, Ppool *p_pairs,
-                         DicVocab *dic);
 
-// probably need a better data structure
-void tokenize_split(const char *buffer, ArrToken *text, Mpool *p_text,
-                    Ppool *p_pairs, size_t bytesRead, DicVocab *dic);
+typedef struct TArr {
+  Token *arr;
+  size_t cap;
+  size_t size;
+} TArr;
 
-void text_merge(Pairs *arr, Mpool *p_text, DicVocab *dic);
+void read_vocab(DicVocab *dic, const char *filename);
+
+void tokenize_file(const char *fileName, const char *vocab_file_name,
+                   unsigned int vocab_size);
+
+void text_merge(TArr *arr, Mpool *pool, DicVocab *dic);
+
+TArr tarr_make_stack(size_t cap);
+void tarr_insert_char(TArr *arr, const char c, Mpool *pool);
+void tarr_free_stack(TArr *arr);
+void tar_reset(TArr *arr);
+void tar_insert_token(TArr *arr, Token *token);

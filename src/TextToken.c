@@ -1,6 +1,28 @@
 #include "TextToken.h"
 
-const char DELIMITERS[] = " \t\n\r\f\v.,;:!?()[]{}<>/\\|`~@#$%^&*-+=\'\"";
+TArr tarr_make_stack(size_t cap) {
+  TArr arr;
+  arr.arr = (Token *)malloc(sizeof(Token) * cap);
+  arr.size = 0;
+  arr.cap = cap;
+  return arr;
+}
+void tarr_insert_char(TArr *arr, const char c, Mpool *pool) {
+  if (arr->size == arr->cap) {
+    arr->cap *= 2;
+    arr->arr = (Token *)realloc(arr->arr, arr->cap);
+  }
+  token_deep_copy_char(&arr->arr[arr->size], c, pool);
+  ++(arr->size);
+}
+void tarr_free_stack(TArr *arr) { free(arr->arr); }
+void tar_reset(TArr *arr) { arr->size = 0; }
+
+// shouuld never have to resize when you use this
+void tar_insert_token(TArr *arr, Token *token) {
+  arr->arr[arr->size] = *token;
+  ++(arr->size);
+}
 
 void read_vocab(DicVocab *dic, const char *filename) {
   FILE *file = fopen(filename, "r");
@@ -49,100 +71,60 @@ void read_vocab(DicVocab *dic, const char *filename) {
   free(buffer);
 }
 
-void text_merge(Pairs *arr, Mpool *p_text, DicVocab *dic) {
-  Pair *pairs = arr->pairs;
-  bool found_pair = true;
-  while (found_pair && arr->size > 1) {
-    found_pair = false;
-    unsigned short i = 0;
-    unsigned short write_index = 0;
-    const unsigned short size = arr->size;
-    while (i < size) {
-      if (dicVocab_check(dic, &pairs[i].full)) {
+void text_merge(TArr *arr, Mpool *pool, DicVocab *dic) {
+  Token *tokens = arr->arr;
+  bool changed = true;
 
-        // Merging: this pair gets removed
-        --(arr->size);
-        found_pair = true;
+  while (changed) {
+    changed = false;
+    size_t write = 0;
+    size_t i = 0;
+    while (i < arr->size) {
+      // Try to merge tokens[i] and tokens[i+1] greedily
+      if (i + 1 < arr->size) {
+        Token merged;
+        token_merge_deep(&merged, &tokens[i], &tokens[i + 1], pool);
+        if (dicVocab_check(dic, &merged)) {
+          tokens[write] = merged;
+          changed = true;
+          i += 2;
 
-        if (write_index > 0) {
-          pairs[write_index - 1].right = pairs[i].full;
-          token_merge_deep(&pairs[write_index - 1].full,
-                           &pairs[write_index - 1].left, &pairs[i].full,
-                           p_text);
+          // Keep trying to merge the result with the next token
+          while (i < arr->size) {
+            Token try_more;
+            token_merge_deep(&try_more, &tokens[write], &tokens[i], pool);
+            if (dicVocab_check(dic, &try_more)) {
+              tokens[write] = try_more;
+              ++i;
+            } else {
+              break;
+            }
+          }
+
+          ++write;
+          continue;
         }
-
-        if (i + 1 < size - 1) {
-          pairs[i + 1].left = pairs[i].full;
-          token_merge_deep(&pairs[i + 1].full, &pairs[i].full,
-                           &pairs[i + 1].right, p_text);
-        }
-
-        ++i;
-        // skip write_index increment – we’ve removed a pair
-      } else {
-        if (write_index != i) {
-          pairs[write_index] = pairs[i];
-        }
-        ++write_index;
-        ++i;
       }
-    }
-  }
-}
 
-void tokenize_make_words(const char *buffer, size_t start, size_t end,
-                         Pairs *arr, Mpool *p_text, Ppool *p_pairs,
-                         DicVocab *dic) {
-
-  size_t size = (end - start);
-  if (size == 0) {
-    // One character word
-    arr->pairs = ppool_get(p_pairs, 1);
-    token_deep_copy_char(&arr->pairs[0].full, buffer[start], p_text);
-    arr->size = 1;
-    return;
-  }
-
-  Pair *pairs = ppool_get(p_pairs, size);
-  arr->size = size;
-  for (unsigned int i = 0; i < size; ++i) {
-    token_deep_copy_char(&pairs[i].left, buffer[i + start], p_text);
-    token_deep_copy_char(&pairs[i].right, buffer[i + 1 + start], p_text);
-    token_merge_deep(&pairs[i].full, &pairs[i].left, &pairs[i].right, p_text);
-  }
-  arr->pairs = pairs;
-  text_merge(arr, p_text, dic);
-}
-
-void tokenize_split(const char *buffer, ArrToken *text, Mpool *p_text,
-                    Ppool *p_pairs, size_t bytesRead, DicVocab *dic) {
-  size_t i = 0;
-  size_t word_start = 0;
-  // size_t word_count = 0;
-
-  while (i < bytesRead) {
-    if (strchr(DELIMITERS, buffer[i])) {
-      if (i > word_start) {
-        tokenize_make_words(buffer, word_start, i - 1, arrToken_get_pairs(text),
-                            p_text, p_pairs, dic);
+      // No merge, just move token
+      if (write != i) {
+        tokens[write] = tokens[i];
       }
-      tokenize_make_words(buffer, i, i, arrToken_get_pairs(text), p_text,
-                          p_pairs, dic);
-      word_start = i + 1;
+      ++write;
+      ++i;
     }
-    ++i;
-  }
-  if (i > word_start) {
-    tokenize_make_words(buffer, word_start, i - 1, arrToken_get_pairs(text),
-                        p_text, p_pairs, dic);
+
+    arr->size = write;
   }
 }
 
-// Take into a file for now
-void tokenize_file(const char *filename, DicVocab *dic) {
+void tokenize_file(const char *fileName, const char *vocab_file_name,
+                   unsigned int vocab_size) {
 
-  // read file
-  FILE *file = fopen(filename, "r");
+  DicVocab dic = dicVocab_make_stack(vocab_size * 3);
+  read_vocab(&dic, vocab_file_name);
+
+  FILE *file = fopen(fileName, "r");
   if (!file) {
     perror("Failed to open file");
     exit(1);
@@ -154,29 +136,28 @@ void tokenize_file(const char *filename, DicVocab *dic) {
 
   fseek(file, 0, SEEK_SET);
   char *buffer = (char *)malloc(file_size + 1);
-  buffer[file_size] = '\n';
-  size_t bytesRead = fread(buffer, 1, file_size, file);
+  const size_t bytesRead = fread(buffer, 1, file_size, file);
+  buffer[bytesRead] = 0;
+
+  printf("ORIGINAL BUFFER\n");
+  printf("%s\n", buffer);
+
   fclose(file);
 
   // init data structures
-  Mpool p_text = mpool_make_stack(file_size * 5);
-  Ppool p_pairs = ppool_make_stack(file_size * 2);
-  ArrToken text = arrToken_make_stack(file_size);
-
-  // process the file
-  tokenize_split(buffer, &text, &p_text, &p_pairs, bytesRead, dic);
-  free(buffer);
-  /*
-  bool pair_found = true;
-  Pairs *pairs = text.pairs;
-  const size_t arr_size = text.size;
-  while (pair_found) {
-    pair_found = false;
-    for (int i = 0; i <arr_size;++i){
-      if(pairs[i].size>1){
-
-      }
-    }
+  Mpool pool = mpool_make_stack(bytesRead * 5);
+  Mpool *pool_ptr = &pool;
+  TArr tokens = tarr_make_stack(bytesRead + 3);
+  TArr *tokens_ptr = &tokens;
+  for (size_t i = 0; i < bytesRead; ++i) {
+    tarr_insert_char(tokens_ptr, buffer[i], pool_ptr);
   }
-  */
+  free(buffer);
+  text_merge(tokens_ptr, pool_ptr, &dic);
+  // PRINT TO SEE IF IT WORKED
+  for (size_t i = 0; i < tokens.size; ++i) {
+    printf("<TOKEN START>%s<TOKEN END>", tokens.arr[i].string);
+  }
+  //  FREE ALL YOUR SHIT
+  //  OR RETURN IT WHO CARES
 }
