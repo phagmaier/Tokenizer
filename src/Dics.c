@@ -1,5 +1,4 @@
 #include "Dics.h"
-#include <stdio.h>
 
 /*UTILITY FUNCTION STUFF*/
 size_t dic_hash(const char *s, const size_t cap) {
@@ -154,7 +153,7 @@ SafeDic *safeDic_make_heap(size_t cap) {
 }
 
 void safeDic_resize(SafeDic *dic) {
-  printf("DON'T THINK SAFE DIC SHOULD EVER GROW\n");
+  // printf("DON'T THINK SAFE DIC SHOULD EVER GROW\n");
   const size_t old_cap = dic->cap;
   const size_t new_cap = dic->cap * 2;
   dic->cap = new_cap;
@@ -265,13 +264,14 @@ bool dicVocab_check(DicVocab *dic, Token *token) {
   return false;
 }
 
-void DicVocab_free_stack(DicVocab *dic) {
+void dicVocab_free_stack(DicVocab *dic) {
   mpool_free_stack(&dic->pool);
   free(dic->nodes);
 }
 
 void dicVocab_resize(DicVocab *dic) {
-  printf("DIC VOCAB SHOULD ALWAYS BE GIVEN ENOUGH SIZE BUT RESIZING ANYWAY\n");
+  // printf("DIC VOCAB SHOULD ALWAYS BE GIVEN ENOUGH SIZE BUT RESIZING
+  // ANYWAY\n");
   const size_t old_cap = dic->cap;
   const size_t new_cap = dic->cap * 2;
   dic->cap = new_cap;
@@ -305,9 +305,7 @@ void dicVocab_insert(DicVocab *dic, Token *string, int value) {
   size_t index = dic_hash(string->string, dic->cap);
   while (dic->nodes[index].token.string) {
     if (!strcmp(dic->nodes[index].token.string, string->string)) {
-      printf(
-          "SHOULD NEVER INSERT SAME ELEMENT TWICE IN DICVOCAB BUT YOU DID\n");
-      printf("%s INSERTED MULTIPLE TIMES \n", string->string);
+      // printf("%s INSERTED MULTIPLE TIMES \n", string->string);
       return;
     }
     index = (index + 1) % dic->cap;

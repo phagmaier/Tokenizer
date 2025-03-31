@@ -64,11 +64,13 @@ void read_vocab(DicVocab *dic, const char *filename) {
     tmp.string = word;
     tmp.size = (i - start) + 1;
     dicVocab_insert(dic, &tmp, val);
+    // printf("INSERTED: %s\n", tmp.string);
 
     c = buffer[++i];
     start = i;
   }
   free(buffer);
+  free(word);
 }
 
 void text_merge(TArr *arr, Mpool *pool, DicVocab *dic) {
@@ -139,8 +141,8 @@ void tokenize_file(const char *fileName, const char *vocab_file_name,
   const size_t bytesRead = fread(buffer, 1, file_size, file);
   buffer[bytesRead] = 0;
 
-  printf("ORIGINAL BUFFER\n");
-  printf("%s\n", buffer);
+  // printf("ORIGINAL BUFFER\n");
+  // printf("%s\n", buffer);
 
   fclose(file);
 
@@ -154,10 +156,8 @@ void tokenize_file(const char *fileName, const char *vocab_file_name,
   }
   free(buffer);
   text_merge(tokens_ptr, pool_ptr, &dic);
-  // PRINT TO SEE IF IT WORKED
-  for (size_t i = 0; i < tokens.size; ++i) {
-    printf("<TOKEN START>%s<TOKEN END>", tokens.arr[i].string);
-  }
-  //  FREE ALL YOUR SHIT
-  //  OR RETURN IT WHO CARES
+
+  mpool_free_stack(pool_ptr);
+  tarr_free_stack(tokens_ptr);
+  dicVocab_free_stack(&dic);
 }

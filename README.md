@@ -2,41 +2,75 @@
 
 [![Language](https://img.shields.io/badge/language-C-blue.svg)](https://en.wikipedia.org/wiki/C_(programming_language))
 
-A high-performance tokenizer written in C, built for **blazing-fast** text processing. It uses **multithreading** and a **custom memory pool** to tokenize large files with minimal overhead. Tokenization is performed using the **Byte Pair Encoding (BPE)** algorithm.
+A high-performance, multithreaded tokenizer written in **C**, designed for fast and scalable text preprocessing using the **Byte Pair Encoding (BPE)** algorithm. It uses a custom memory pool and lock-free optimizations for maximum efficiency.
 
 ---
 
-## ⚠️ Current Status
+## 🧠 What Is BPE?
 
-- ✅ Vocabulary generation works  
-- ⚠️ Functions for reading vocab and tokenizing new text exist but are **not yet tested**
-- ⚠️ If data is sparse or repetitive in some areas or if token size is too large for text the program may run forever **NEED TO FIX THIS**
+**Byte Pair Encoding (BPE)** is a tokenization algorithm that:
+
+1. Starts by splitting text into individual characters.
+2. Repeatedly finds the most frequent pair of adjacent tokens.
+3. Merges that pair into a new token.
+4. Continues until a desired vocabulary size is reached.
+
+BPE is widely used in machine learning for subword tokenization, especially in models like GPT, BERT, and other transformers.
+
+---
+
+## 🧾 What This Code Does
+
+This project includes two main components:
+
+- A **vocabulary generator** using multithreaded BPE (`tokenizer(...)`)
+- A **text tokenizer** that applies the learned vocab to new text (`tokenize_file(...)`)
+
+### 🔧 Train a BPE Vocabulary
+
+Use the `tokenizer()` function to generate a vocabulary from a corpus. This function reads an input file in chunks (one per thread), merges the most common pairs using BPE, and stores the results in a shared dictionary.
+
+```c
+tokenizer(
+    "../data/infiniteJest.txt",   // Input file
+    10000,                        // Desired vocab size
+    250000,                       // Bytes per thread
+    "../data/myTokens.txt",       // Output vocab file
+    8                             // Max number of threads
+);
+```
+
+### ✂️ Tokenize New Text with Existing Vocab
+
+Use `tokenize_file()` to apply a previously generated vocabulary to new text using greedy merging:
+
+```c
+tokenize_file(
+    "../data/test.txt",           // File to tokenize
+    "../data/myTokens.txt",       // Vocab file (format: id,token)
+    10000                         // Vocabulary size
+);
+```
+
+The vocab file should be in the format:
+
+```
+1,the
+2,er
+3,e
+...
+```
 
 ---
 
 ## ✨ Features
 
-- 🔀 **Multithreaded processing** — Parallel tokenization using POSIX threads  
-- 🧠 **Custom memory pool** — Fast and controlled memory allocation  
-- 🧩 **Byte Pair Encoding (BPE)** — Efficient subword segmentation  
-- 🧮 **Configurable vocabulary size**  
+- 🔀 **Multithreaded** — Parallel vocab generation using POSIX threads
+- 🧠 **Memory pool** — Custom allocator for fast, low-fragmentation memory reuse
+- 📚 **BPE tokenization** — Works well for NLP, compression, and language modeling
+- 🧮 **Configurable vocabulary size**
 - 📦 **Adjustable chunk size per thread**
-
----
-
-## 🛠️ Tech Stack
-
-- **C** — Core implementation  
-- **CMake** — Build system  
-- **pthreads** — Concurrency
-
----
-
-## 📋 Requirements
-
-- 🧰 C compiler (GCC/Clang) with **C23 support**  
-- ⚙️ CMake ≥ 3.16  
-- 🛠️ Make (usually bundled with Unix-like systems)
+- 📜 **Greedy token merging** when applying vocab to new text
 
 ---
 
@@ -45,53 +79,35 @@ A high-performance tokenizer written in C, built for **blazing-fast** text proce
 ```bash
 # Clone the repository
 git clone https://github.com/phagmaier/Tokenizer.git
-
-# Enter the project directory
 cd Tokenizer
 
 # Create and move into the build directory
 mkdir build && cd build
 
-# Configure and build
+# Build the project
 cmake ..
 cmake --build .
 ```
 
-For a release build:
-
-```bash
-cmake --build . --config Release
-```
-
-✅ `runme` will be available in the `build` directory.
+✅ This will produce the `runme` executable inside `build/`.
 
 ---
 
-## 🚀 Usage
+## 🧪 Usage via main.c
+
+> ⚠️ `main.c` is included for demonstration purposes. If you're using this in your own project, you can exclude `main.c` and just link the source files.
 
 ### CLI Flags
 
-| Flag | Description           | Default              |
-|------|-----------------------|----------------------|
-| `-i` | Input file path       | `../data/data.txt`   |
-| `-o` | Output file path      | `../data/myTokens.txt` |
-| `-v` | Vocabulary size       | `10000`              |
-| `-b` | Bytes per thread      | `250000`             |
-| `-t` | Max threads           | `8`                  |
+| Flag | Description           | Default                |
+|------|-----------------------|------------------------|
+| `-i` | Input file            | `../data/data.txt`     |
+| `-o` | Output vocab file     | `../data/myTokens.txt` |
+| `-v` | Vocabulary size       | `10000`                |
+| `-b` | Bytes per thread      | `250000`               |
+| `-t` | Max threads           | `15`                   |
 
-**Output Format:**
-
-```
-<token_id>,<token_string>\n
-```
-
-### Example
-
-Custom run:
-
-```bash
-./runme -i ../data/infiniteJest.txt -v 10000 -b 500000 -o ../data/myTokens.txt -t 8
-```
+### Examples
 
 Default run:
 
@@ -99,20 +115,26 @@ Default run:
 ./runme
 ```
 
-⚠️ File paths should be relative to `build/` or be absolute.
+Custom run:
+
+```bash
+./runme -i ../data/big.txt -o ../data/vocab.txt -v 8000 -b 500000 -t 8
+```
 
 ---
 
-## 🗂️ Project Structure
+## 📁 Project Structure
 
 ```
 Tokenizer/
 ├── src/
-│   ├── Dics.c/.h         # Dictionary & hash table
-│   ├── Helper.c/.h       # Utility helpers
-│   ├── Token.c/.h        # Token data structures
-│   └── Tokenizer.c/.h    # Core tokenizer logic
-├── CMakeLists.txt        # Build config
+│   ├── Dics.c/.h         # Dictionary, hashing, vocab counters
+│   ├── Token.c/.h        # Token data structures and helpers
+│   ├── Helper.c/.h       # Misc utility functions
+│   ├── Tokenizer.c/.h    # BPE training logic
+│   ├── TextToken.c/.h    # Applies learned vocab to new text
+├── main.c                # Example usage (optional)
+├── CMakeLists.txt        # Build configuration
 └── data/                 # Sample input/output files
 ```
 
@@ -120,32 +142,26 @@ Tokenizer/
 
 ## ⚡ Benchmarks
 
-- 📘 *Infinite Jest* (3.2MB) — ~11 sec with 8 threads (default settings)  
-- 📦 167MB corpus — ~15 sec with 15 threads, 50kB chunks
+- 📘 *Infinite Jest* (3.2MB): ~9 sec with 8 threads (default settings)
+- 📦 167MB corpus: ~11 sec with 15 threads
 
-💡 Increase chunk size for better accuracy. Decrease it for more speed.
+---
+
+## 📝 NOTE
+
+💡 The larger the bytes per thread the larger the chunk to be tokenized will be leading to more "accurate" results.
 
 ---
 
 ## 🧠 Limitations
 
-1. ❌ Only supports ASCII  
-2. ✂️ Chunk splitting may occur mid-word (needs smarter segmentation)
-
----
-
-## ✅ TODO
-
-- [ ] Prevent chunk splits mid-word  
-- [ ] Test vocab-based tokenization  
-- [ ] (Nice-to-have) Add NN/Transformer training integration
-- [ ] Find a nice way to exit early and or try other chunk sections if chunk cannot generate more vocab
+- ❌ Only supports ASCII input
 
 ---
 
 ## 🤝 Contributing
 
-No formal contributing guide yet — but PRs are welcome!
+No formal guidelines — feel free to fork or PR improvements!
 
 ---
 
@@ -153,4 +169,5 @@ No formal contributing guide yet — but PRs are welcome!
 
 **Parker Hagmaier**  
 📧 [parkerhagmaier@gmail.com](mailto:parkerhagmaier@gmail.com)
+
 ---

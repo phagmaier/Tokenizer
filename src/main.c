@@ -64,8 +64,6 @@ int main(int argc, char *argv[]) {
   printf("Execution time for %zu tokens: %d hours, %d minutes, %d seconds\n",
          vocab_size, hours, minutes, seconds);
 
-  // DicVocab dic = dicVocab_make_stack(DEFAULT_VOCAB_SIZE);
-  // read_vocab(&dic, DEFAULT_OUTPUT_FILE);
   tokenize_file("../data/test.txt", DEFAULT_OUTPUT_FILE, DEFAULT_VOCAB_SIZE);
   return 0;
 }

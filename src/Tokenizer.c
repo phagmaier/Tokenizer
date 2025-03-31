@@ -1,11 +1,6 @@
 #include "Tokenizer.h"
-#include "Dics.h"
-
-const char TOKENIZER_DELIMITERS[] =
-    " \t\n\r\f\v.,;:!?()[]{}<>/\\|`~@#$%^&*-+=\'\"";
 
 void write_tokens(SafeDic *global_dic, const char *fileName) {
-  // printf("GLOBAL DIC SIZE: %zu\n", global_dic->size);
   FILE *fptr;
 
   fptr = fopen(fileName, "w");
@@ -27,8 +22,9 @@ void tokenizer(char *filename, size_t vocab_tokens, size_t bytes_per_thread,
   ThreadData *data = create_thread_queue(filename, vocab_tokens,
                                          bytes_per_thread, &num_threads);
   printf("NUM THREADS %zu\n", num_threads);
-  for (size_t i = 0; i < DELIMITERS_SIZE; ++i) {
-    safeDic_insert_char(data[0].global_dic, TOKENIZER_DELIMITERS[i]);
+  for (int i = 0; i < ASCII_SIZE; ++i) {
+    // safeDic_insert_char(data[0].global_dic, TOKENIZER_DELIMITERS[i]);
+    safeDic_insert_char(data[0].global_dic, i);
   }
   pthread_t *threads = (pthread_t *)malloc(sizeof(pthread_t) * num_threads);
   for (size_t thread = 0; thread < num_threads; ++thread) {
@@ -56,24 +52,16 @@ void *thread_starter(void *args) {
   Token max_token;
   Token *max_ptr = &max_token;
   while (get_index(&start, &size, &vocab_goal, data->indexes)) {
-    // printf("READING FILE\n");
     tokenizer_read_file(data->fileName, text, pool_text, dic, start, size);
-    // printf("DONE READING FILE\n");
 
-    // printf("DIC RESET GET MAX\n");
     dic_reset_get_max(dic, &max_token, pool_text);
-    // printf("DONE DIC RESET GET MAX\n");
 
-    // printf("INSERTING SAFE DIC\n");
     vocab_count = safeDic_insert(global, max_ptr);
-    // printf("DONE INSERTING SAFE DIC\n");
     while (vocab_count < vocab_goal) {
-      // printf("VOCAB_COUNT/vocab_goal %zu/%zu\n", vocab_count, vocab_goal);
       merge_max(text, pool_text, dic, max_ptr);
       dic_reset_get_max(dic, max_ptr, pool_text);
       vocab_count += safeDic_insert(global, max_ptr);
     }
-    // printf("DONE WITH AN ITERATION\n");
     vocab_count = 0;
     pairs_reset(text);
     mpool_reset(pool_text);
@@ -98,7 +86,7 @@ void merge_max(Pairs *arr, Mpool *p_text, Dic *dic, Token *max) {
         token_merge_deep(&pairs[write_index - 1].full,
                          &pairs[write_index - 1].left, max, p_text);
       }
-      if (i + 1 < size - 1) {
+      if (i + 1 < size) {
         pairs[i + 1].left = *max;
         token_merge_deep(&pairs[i + 1].full, max, &pairs[i + 1].right, p_text);
       }
@@ -126,7 +114,6 @@ void tokenizer_read_file(const char *fileName, Pairs *text, Mpool *p_text,
   fseek(file, start, SEEK_SET);
   char *buffer = (char *)malloc(size);
   const size_t bytesRead = fread(buffer, 1, size, file);
-  // printf("bytesRead: %zu\n", bytesRead);
   fclose(file);
   for (size_t i = 0; i < bytesRead - 1; ++i) {
     pairs_insert_chars(text, buffer[i], buffer[i + 1], p_text);
