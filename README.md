@@ -1,3 +1,5 @@
+> **Earlier iteration.** Superseded by [Zokenizer](https://github.com/phagmaier/Zokenizer) (Zig) and the BPE tokenizer built into [zlm](https://github.com/phagmaier/zlm).
+
 # 🔡 Tokenizer
 
 [![Language](https://img.shields.io/badge/language-C-blue.svg)](https://en.wikipedia.org/wiki/C_(programming_language))
